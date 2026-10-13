@@ -137,7 +137,9 @@ composes the deck from the reference images of `tests/golden` (the key engine's 
   another model, see [docs/adding-a-device.md](docs/adding-a-device.md); contributions from people who
   own other stream deck models are welcome.
 - For the CPU temperature only: an AMD CPU of family 17h to 1Ah (Ryzen, Zen 1 to Zen 5) and the
-  [PawnIO](https://pawnio.eu/) driver. Everything else works without them.
+  [PawnIO](https://pawnio.eu/) driver. Everything else works without them. Intel CPUs are not read
+  today: a contribution is welcome, see
+  [docs/adding-a-temperature-source.md](docs/adding-a-temperature-source.md).
 - StreamDock must not be running at the same time, because both programs would compete for the
   device.
 
@@ -318,6 +320,8 @@ administrator rights:
 
 To write your own module, see [docs/writing-a-module.md](docs/writing-a-module.md).
 To add support for another device, see [docs/adding-a-device.md](docs/adding-a-device.md).
+To read the CPU temperature of another CPU family (Intel, for example), see
+[docs/adding-a-temperature-source.md](docs/adding-a-temperature-source.md).
 
 ## Project layout
 
@@ -331,7 +335,7 @@ To add support for another device, see [docs/adding-a-device.md](docs/adding-a-d
 | `src/render/` | Direct2D/DirectWrite drawing, the key engine and the appearance resolution. |
 | `src/modules/` | The modules and their shared helpers (`common/`). |
 | `src/web/` | Embedded web server, HTTP API and the web UI's assets. |
-| `src/sensors/`, `sensors-service/` | CPU temperature through PawnIO, and the `LiteDeckSensors` Windows service. |
+| `src/sensors/`, `sensors-service/` | CPU temperature through PawnIO (the temperature sources and their registry), and the `LiteDeckSensors` Windows service. |
 | `tests/` | doctest unit tests, fakes, and reference images (`tests/golden`). |
 | `scripts/` | Build, package, install and uninstall scripts. |
 | `proto/` | Protocol notes ([PROTOCOL.md](proto/PROTOCOL.md)) and the Python probes used to work them out. |
