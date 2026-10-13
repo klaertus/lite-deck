@@ -4,7 +4,9 @@ $LdInstallDir = Join-Path $env:ProgramFiles "lite-deck"
 $LdRunKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 $LdApprovedKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
 $LdStateKey = "HKCU:\Software\lite-deck"
-$LdFiles = @("lite-deck.exe", "lite-deck-sensors.exe", "AMDFamily17.bin", "AMDFamily17.COPYING.txt",
+# The fixed files of a distribution folder. The PawnIO modules (*.bin, each with its licence) come on top:
+# Get-PawnIOModulePlan (package.ps1) and Get-DistModuleFiles (install.ps1).
+$LdFiles = @("lite-deck.exe", "lite-deck-sensors.exe",
              "install.ps1", "uninstall.ps1", "install-lib.ps1", "LICENSE", "THIRD_PARTY_NOTICES.md")
 $LdRunName = "lite-deck"
 $LdWindowClass = "LiteDeckHiddenWindow"
@@ -59,6 +61,59 @@ function Assert-SignedBy([string]$Path, [string]$Cn) {
     if ($sig.Status -ne "Valid" -or -not $sig.SignerCertificate -or -not (Test-SubjectHasCn $sig.SignerCertificate.Subject $Cn)) {
         throw "Signature rejected for $Path (status $($sig.Status), signer '$($sig.SignerCertificate.Subject)')"
     }
+}
+
+# The licence shipped next to a PawnIO module: "AMDFamily17.bin" -> "AMDFamily17.COPYING.txt".
+function Get-ModuleLicenceName([string]$Module) {
+    return [IO.Path]::GetFileNameWithoutExtension($Module) + ".COPYING.txt"
+}
+
+# The lines of third_party\pawnio-modules\SOURCE.txt -> @{ "<Module>.bin" = "<SHA-256, upper case>" }.
+# Each entry starts with a line "<Module>.bin - ..." and has a line "SHA-256: <64 hex digits>".
+function Get-PawnIOModuleHashes([string[]]$Lines) {
+    $hashes = @{}
+    $current = $null
+    foreach ($line in $Lines) {
+        if ($line -match '^\s*([A-Za-z0-9_.-]+\.bin)\s+-\s') { $current = $Matches[1]; continue }
+        if ($current -and $line -match '^\s*SHA-256:\s*([0-9A-Fa-f]{64})\s*$') {
+            if ($hashes.ContainsKey($current)) { throw "SOURCE.txt: two SHA-256 lines for $current" }
+            $hashes[$current] = $Matches[1].ToUpperInvariant()
+        }
+    }
+    return $hashes
+}
+
+# What package.ps1 copies from third_party\pawnio-modules, from the names of the files there and the lines
+# of its SOURCE.txt: one item per *.bin with its expected SHA-256, its licence (<Module>.COPYING, else the
+# shared COPYING) and the licence's name in the distribution folder. Throws when there is no module, or
+# when a module has an unexpected name, no SHA-256 in SOURCE.txt or no licence.
+function Get-PawnIOModulePlan([string[]]$FileNames, [string[]]$SourceLines) {
+    $hashes = Get-PawnIOModuleHashes $SourceLines
+    $modules = @($FileNames | Where-Object { $_ -like "*.bin" } | Sort-Object)
+    if (-not $modules) { throw "No PawnIO module (*.bin) in third_party\pawnio-modules" }
+    foreach ($m in $modules) {
+        if ($m -notmatch '^[A-Za-z0-9_-][A-Za-z0-9_.-]*\.bin$') { throw "PawnIO module with an unexpected name: $m" }
+        if (-not $hashes.ContainsKey($m)) { throw "$m has no SHA-256 entry in third_party\pawnio-modules\SOURCE.txt" }
+        $own = [IO.Path]::GetFileNameWithoutExtension($m) + ".COPYING"
+        if ($FileNames -contains $own) { $licence = $own }
+        elseif ($FileNames -contains "COPYING") { $licence = "COPYING" }
+        else { throw "$m has no licence ($own or COPYING) in third_party\pawnio-modules" }
+        [pscustomobject]@{ Module = $m; Sha256 = $hashes[$m]; Licence = $licence; LicenceOut = (Get-ModuleLicenceName $m) }
+    }
+}
+
+# The PawnIO modules of a distribution folder and their licences, from the names of its files.
+# Throws when there is no module or a module comes without its <Module>.COPYING.txt.
+function Get-DistModuleFiles([string[]]$FileNames) {
+    $modules = @($FileNames | Where-Object { $_ -like "*.bin" } | Sort-Object)
+    if (-not $modules) { throw "No PawnIO module (*.bin) in the folder (use the folder made by package.ps1)" }
+    $files = @()
+    foreach ($m in $modules) {
+        $licence = Get-ModuleLicenceName $m
+        if ($FileNames -notcontains $licence) { throw "$m comes without $licence (use the folder made by package.ps1)" }
+        $files += @($m, $licence)
+    }
+    return $files
 }
 
 function Initialize-LdUser32 {

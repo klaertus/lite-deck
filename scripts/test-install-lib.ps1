@@ -10,7 +10,42 @@ Check "quoted path keeps spaces inside quotes" ((Get-QuotedPath 'C:\Program File
 Check "quoted path does not double quotes" ((Get-QuotedPath '"C:\x y\a.exe"') -eq '"C:\x y\a.exe"')
 Check "Test-IsAdmin returns a boolean" ((Test-IsAdmin) -is [bool])
 Check "install dir is under Program Files" ($LdInstallDir -like "*\lite-deck" -and $LdInstallDir.StartsWith($env:ProgramFiles))
-Check "file list has the binaries and scripts" ((@('lite-deck.exe','lite-deck-sensors.exe','AMDFamily17.bin','install.ps1','uninstall.ps1') | ForEach-Object { $LdFiles -contains $_ }) -notcontains $false)
+Check "file list has the binaries and scripts" ((@('lite-deck.exe','lite-deck-sensors.exe','install.ps1','uninstall.ps1') | ForEach-Object { $LdFiles -contains $_ }) -notcontains $false)
+Check "file list names no PawnIO module (they are found in the folder)" (-not ($LdFiles | Where-Object { $_ -like '*.bin' -or $_ -like '*.COPYING.txt' }))
+
+# PawnIO modules: every *.bin of third_party\pawnio-modules, with its SOURCE.txt hash and its licence.
+$amdHash = 'DAE74615761B78BDF064DFB3E136252DDCC6FC727D88F14738D0E5800D427A91'
+$intelHash = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+$sourceLines = @(
+    'AMDFamily17.bin - signed PawnIO module, unmodified.',
+    'Release: namazso/PawnIO.Modules 0.2.11',
+    "SHA-256: $amdHash",
+    '',
+    'IntelMSR.bin - signed PawnIO module, unmodified.',
+    "SHA-256: $intelHash")
+Check "module licence name" ((Get-ModuleLicenceName 'AMDFamily17.bin') -eq 'AMDFamily17.COPYING.txt' -and (Get-ModuleLicenceName 'IntelMSR.bin') -eq 'IntelMSR.COPYING.txt')
+$hashes = Get-PawnIOModuleHashes $sourceLines
+Check "SOURCE.txt hashes are read per module, upper case" ($hashes.Count -eq 2 -and $hashes['AMDFamily17.bin'] -eq $amdHash -and $hashes['IntelMSR.bin'] -ceq $intelHash.ToUpperInvariant())
+Check "a SHA-256 line before any module line is ignored" ((Get-PawnIOModuleHashes @("SHA-256: $amdHash")).Count -eq 0)
+$threw = $false; try { Get-PawnIOModuleHashes @('A.bin - x', "SHA-256: $amdHash", "SHA-256: $amdHash") | Out-Null } catch { $threw = $true }
+Check "two SHA-256 lines for one module are refused" $threw
+$plan = @(Get-PawnIOModulePlan -FileNames @('AMDFamily17.bin', 'COPYING', 'SOURCE.txt') -SourceLines $sourceLines)
+Check "today's modules folder: AMDFamily17.bin with the shared COPYING" ($plan.Count -eq 1 -and $plan[0].Module -eq 'AMDFamily17.bin' -and $plan[0].Licence -eq 'COPYING' -and $plan[0].LicenceOut -eq 'AMDFamily17.COPYING.txt' -and $plan[0].Sha256 -eq $amdHash)
+$plan = @(Get-PawnIOModulePlan -FileNames @('IntelMSR.bin', 'AMDFamily17.bin', 'COPYING', 'IntelMSR.COPYING', 'SOURCE.txt') -SourceLines $sourceLines)
+Check "an added module is picked up, with its own licence when it has one" ($plan.Count -eq 2 -and $plan[0].Module -eq 'AMDFamily17.bin' -and $plan[0].Licence -eq 'COPYING' -and $plan[1].Module -eq 'IntelMSR.bin' -and $plan[1].Licence -eq 'IntelMSR.COPYING' -and $plan[1].LicenceOut -eq 'IntelMSR.COPYING.txt')
+$threw = $false; try { Get-PawnIOModulePlan -FileNames @('AMDFamily17.bin', 'Other.bin', 'COPYING') -SourceLines $sourceLines | Out-Null } catch { $threw = $true }
+Check "a module without a SOURCE.txt hash is refused" $threw
+$threw = $false; try { Get-PawnIOModulePlan -FileNames @('AMDFamily17.bin', 'SOURCE.txt') -SourceLines $sourceLines | Out-Null } catch { $threw = $true }
+Check "a module without a licence is refused" $threw
+$threw = $false; try { Get-PawnIOModulePlan -FileNames @('COPYING', 'SOURCE.txt') -SourceLines $sourceLines | Out-Null } catch { $threw = $true }
+Check "a modules folder without a module is refused" $threw
+$dist = @('lite-deck.exe', 'AMDFamily17.bin', 'AMDFamily17.COPYING.txt', 'IntelMSR.bin', 'IntelMSR.COPYING.txt', 'PawnIO_setup.exe')
+$files = @(Get-DistModuleFiles $dist)
+Check "dist folder: every module and its licence are installed" ($files.Count -eq 4 -and (@('AMDFamily17.bin', 'AMDFamily17.COPYING.txt', 'IntelMSR.bin', 'IntelMSR.COPYING.txt') | ForEach-Object { $files -contains $_ }) -notcontains $false)
+$threw = $false; try { Get-DistModuleFiles @('lite-deck.exe', 'IntelMSR.bin') | Out-Null } catch { $threw = $true }
+Check "dist folder: a module without its licence is refused" $threw
+$threw = $false; try { Get-DistModuleFiles @('lite-deck.exe', 'LICENSE') | Out-Null } catch { $threw = $true }
+Check "dist folder: no module is refused" $threw
 Check "legacy names are the former ones" ($LdLegacyServiceName -eq "LibreDeckSensors" -and $LdLegacyRunName -eq "libre-deck" -and $LdLegacyInstallDir -like "*\libre-deck" -and $LdLegacyInstallDir.StartsWith($env:ProgramFiles))
 Check "legacy names never match the new ones" ($LdLegacyServiceName -ne $LdServiceName -and $LdLegacyRunName -ne $LdRunName -and $LdLegacyInstallDir -ne $LdInstallDir -and $LdLegacyStateKey -ne $LdStateKey -and $LdLegacyWindowClass -ne $LdWindowClass)
 Check "legacy and new process lists are disjoint" (-not ($LdLegacyProcessNames | Where-Object { $LdProcessNames -contains $_ }))

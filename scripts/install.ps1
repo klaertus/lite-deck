@@ -26,6 +26,8 @@ if (Test-ServiceMarkedForDeletion -Name $LdServiceName) {
     exit 1
 }
 $src = $PSScriptRoot
+# Every PawnIO module of the folder (the sensors service picks the one for this CPU), with its licence.
+$moduleFiles = @(Get-DistModuleFiles @(Get-ChildItem -LiteralPath $src -File | ForEach-Object { $_.Name }))
 
 # 1. PawnIO: never installed without consent (a switch, or a yes to the question)
 $installPawnIO = $false
@@ -46,7 +48,7 @@ if (Get-PawnIOVersion) {
     Write-Host "PawnIO is not installed (no console to ask; use -InstallPawnIO to install it)."
 }
 
-$required = if ($installPawnIO) { $LdFiles + @("PawnIO_setup.exe") } else { $LdFiles }
+$required = if ($installPawnIO) { $LdFiles + $moduleFiles + @("PawnIO_setup.exe") } else { $LdFiles + $moduleFiles }
 foreach ($f in $required) {
     if (-not (Test-Path -LiteralPath (Join-Path $src $f))) { throw "Missing file in ${src}: $f (use the folder made by package.ps1)" }
 }
@@ -91,7 +93,7 @@ try {
     Stop-LiteDeck -Script "install.ps1"
     Wait-ProcessesExit -Names $LdProcessNames -Script "install.ps1"
     New-Item -ItemType Directory -Force -Path $LdInstallDir | Out-Null
-    foreach ($f in $LdFiles) {
+    foreach ($f in $LdFiles + $moduleFiles) {
         $from = [IO.Path]::GetFullPath((Join-Path $src $f))
         $to = [IO.Path]::GetFullPath((Join-Path $LdInstallDir $f))
         # Re-running from the installed copy: source and destination are the same file (-ne is case-insensitive).

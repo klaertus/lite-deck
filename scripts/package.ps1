@@ -16,8 +16,19 @@ New-Item -ItemType Directory -Force -Path $dist | Out-Null
 $release = Join-Path $root "build\dist-build"
 Copy-Item -LiteralPath (Join-Path $release "lite-deck.exe") -Destination $dist
 Copy-Item -LiteralPath (Join-Path $release "lite-deck-sensors.exe") -Destination $dist
-Copy-Item -LiteralPath (Join-Path $root "third_party\pawnio-modules\AMDFamily17.bin") -Destination $dist
-Copy-Item -LiteralPath (Join-Path $root "third_party\pawnio-modules\COPYING") -Destination (Join-Path $dist "AMDFamily17.COPYING.txt")
+# Every PawnIO module of third_party\pawnio-modules, checked against its SHA-256 in SOURCE.txt, with its licence.
+$modulesDir = Join-Path $root "third_party\pawnio-modules"
+$moduleNames = @(Get-ChildItem -LiteralPath $modulesDir -File | ForEach-Object { $_.Name })
+$plan = @(Get-PawnIOModulePlan -FileNames $moduleNames -SourceLines (Get-Content -LiteralPath (Join-Path $modulesDir "SOURCE.txt")))
+$moduleFiles = @()
+foreach ($p in $plan) {
+    $from = Join-Path $modulesDir $p.Module
+    $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $from).Hash
+    if ($hash -ne $p.Sha256) { throw "$($p.Module): SHA-256 $hash, SOURCE.txt says $($p.Sha256)" }
+    Copy-Item -LiteralPath $from -Destination $dist
+    Copy-Item -LiteralPath (Join-Path $modulesDir $p.Licence) -Destination (Join-Path $dist $p.LicenceOut)
+    $moduleFiles += @($p.Module, $p.LicenceOut)
+}
 foreach ($s in "install.ps1", "uninstall.ps1", "install-lib.ps1") { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $s) -Destination $dist }
 $notices = @("LICENSE", "THIRD_PARTY_NOTICES.md")
 foreach ($n in $notices) { Copy-Item -LiteralPath (Join-Path $root $n) -Destination $dist }
@@ -30,7 +41,7 @@ if (-not (Test-Path -LiteralPath $cache)) {
 Assert-SignedBy -Path $cache -Cn $PawnIOSignerCn
 Copy-Item -LiteralPath $cache -Destination $dist
 
-foreach ($f in $LdFiles + @("PawnIO_setup.exe")) {  # $LdFiles includes the notices
+foreach ($f in $LdFiles + $moduleFiles + @("PawnIO_setup.exe")) {  # $LdFiles includes the notices
     if (-not (Test-Path -LiteralPath (Join-Path $dist $f))) { throw "Incomplete dist folder: $f" }
 }
 Get-ChildItem -LiteralPath $dist | Select-Object Name, Length | Format-Table -AutoSize | Out-Host
