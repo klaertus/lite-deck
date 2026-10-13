@@ -4,9 +4,12 @@ $LdInstallDir = Join-Path $env:ProgramFiles "lite-deck"
 $LdRunKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 $LdApprovedKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
 $LdStateKey = "HKCU:\Software\lite-deck"
+# The copy of third_party\pawnio-modules\SOURCE.txt in a distribution folder: only the modules it lists
+# are shipped and installed.
+$LdModuleManifest = "PawnIO-modules.SOURCE.txt"
 # The fixed files of a distribution folder. The PawnIO modules (*.bin, each with its licence) come on top:
 # Get-PawnIOModulePlan (package.ps1) and Get-DistModuleFiles (install.ps1).
-$LdFiles = @("lite-deck.exe", "lite-deck-sensors.exe",
+$LdFiles = @("lite-deck.exe", "lite-deck-sensors.exe", $LdModuleManifest,
              "install.ps1", "uninstall.ps1", "install-lib.ps1", "LICENSE", "THIRD_PARTY_NOTICES.md")
 $LdRunName = "lite-deck"
 $LdWindowClass = "LiteDeckHiddenWindow"
@@ -83,17 +86,25 @@ function Get-PawnIOModuleHashes([string[]]$Lines) {
     return $hashes
 }
 
+# The *.bin of `FileNames` that SOURCE.txt (`Hashes`, from Get-PawnIOModuleHashes) lists, sorted. Any other
+# *.bin is left out with a warning: it is never shipped nor installed, and it never stops either.
+function Select-ListedModules([string[]]$FileNames, [hashtable]$Hashes, [string]$Where) {
+    foreach ($m in @($FileNames | Where-Object { $_ -like "*.bin" } | Sort-Object)) {
+        if ($m -notmatch '^[A-Za-z0-9_-][A-Za-z0-9_.-]*\.bin$') { Write-Warning "$Where\${m}: unexpected name for a PawnIO module, ignored"; continue }
+        if (-not $Hashes.ContainsKey($m)) { Write-Warning "$Where\${m}: not listed in SOURCE.txt, ignored"; continue }
+        $m
+    }
+}
+
 # What package.ps1 copies from third_party\pawnio-modules, from the names of the files there and the lines
-# of its SOURCE.txt: one item per *.bin with its expected SHA-256, its licence (<Module>.COPYING, else the
-# shared COPYING) and the licence's name in the distribution folder. Throws when there is no module, or
-# when a module has an unexpected name, no SHA-256 in SOURCE.txt or no licence.
+# of its SOURCE.txt: one item per listed *.bin with its expected SHA-256, its licence (<Module>.COPYING,
+# else the shared COPYING) and the licence's name in the distribution folder. Throws when no listed module
+# is left, or when one has no licence.
 function Get-PawnIOModulePlan([string[]]$FileNames, [string[]]$SourceLines) {
     $hashes = Get-PawnIOModuleHashes $SourceLines
-    $modules = @($FileNames | Where-Object { $_ -like "*.bin" } | Sort-Object)
-    if (-not $modules) { throw "No PawnIO module (*.bin) in third_party\pawnio-modules" }
+    $modules = @(Select-ListedModules -FileNames $FileNames -Hashes $hashes -Where "third_party\pawnio-modules")
+    if (-not $modules) { throw "No PawnIO module (*.bin listed in SOURCE.txt) in third_party\pawnio-modules" }
     foreach ($m in $modules) {
-        if ($m -notmatch '^[A-Za-z0-9_-][A-Za-z0-9_.-]*\.bin$') { throw "PawnIO module with an unexpected name: $m" }
-        if (-not $hashes.ContainsKey($m)) { throw "$m has no SHA-256 entry in third_party\pawnio-modules\SOURCE.txt" }
         $own = [IO.Path]::GetFileNameWithoutExtension($m) + ".COPYING"
         if ($FileNames -contains $own) { $licence = $own }
         elseif ($FileNames -contains "COPYING") { $licence = "COPYING" }
@@ -102,11 +113,12 @@ function Get-PawnIOModulePlan([string[]]$FileNames, [string[]]$SourceLines) {
     }
 }
 
-# The PawnIO modules of a distribution folder and their licences, from the names of its files.
-# Throws when there is no module or a module comes without its <Module>.COPYING.txt.
-function Get-DistModuleFiles([string[]]$FileNames) {
-    $modules = @($FileNames | Where-Object { $_ -like "*.bin" } | Sort-Object)
-    if (-not $modules) { throw "No PawnIO module (*.bin) in the folder (use the folder made by package.ps1)" }
+# The PawnIO modules of a distribution folder and their licences, from the names of its files and the lines
+# of its $LdModuleManifest. A *.bin it does not list is ignored with a warning. Throws when no listed module
+# is left or one comes without its <Module>.COPYING.txt.
+function Get-DistModuleFiles([string[]]$FileNames, [string[]]$SourceLines) {
+    $modules = @(Select-ListedModules -FileNames $FileNames -Hashes (Get-PawnIOModuleHashes $SourceLines) -Where "folder")
+    if (-not $modules) { throw "No PawnIO module listed in $LdModuleManifest in the folder (use the folder made by package.ps1)" }
     $files = @()
     foreach ($m in $modules) {
         $licence = Get-ModuleLicenceName $m
@@ -114,6 +126,17 @@ function Get-DistModuleFiles([string[]]$FileNames) {
         $files += @($m, $licence)
     }
     return $files
+}
+
+# What an upgrade removes from the install folder: the modules the installed $LdModuleManifest lists (the
+# ones a previous install.ps1 put there) and their licences, when present and no longer in `NewFiles`.
+function Get-StaleModuleFiles([string[]]$InstalledNames, [string[]]$InstalledSourceLines, [string[]]$NewFiles) {
+    $listed = (Get-PawnIOModuleHashes $InstalledSourceLines).Keys
+    foreach ($m in @($listed | Sort-Object)) {
+        foreach ($f in @($m, (Get-ModuleLicenceName $m))) {
+            if ($InstalledNames -contains $f -and $NewFiles -notcontains $f) { $f }
+        }
+    }
 }
 
 function Initialize-LdUser32 {

@@ -33,19 +33,37 @@ $plan = @(Get-PawnIOModulePlan -FileNames @('AMDFamily17.bin', 'COPYING', 'SOURC
 Check "today's modules folder: AMDFamily17.bin with the shared COPYING" ($plan.Count -eq 1 -and $plan[0].Module -eq 'AMDFamily17.bin' -and $plan[0].Licence -eq 'COPYING' -and $plan[0].LicenceOut -eq 'AMDFamily17.COPYING.txt' -and $plan[0].Sha256 -eq $amdHash)
 $plan = @(Get-PawnIOModulePlan -FileNames @('IntelMSR.bin', 'AMDFamily17.bin', 'COPYING', 'IntelMSR.COPYING', 'SOURCE.txt') -SourceLines $sourceLines)
 Check "an added module is picked up, with its own licence when it has one" ($plan.Count -eq 2 -and $plan[0].Module -eq 'AMDFamily17.bin' -and $plan[0].Licence -eq 'COPYING' -and $plan[1].Module -eq 'IntelMSR.bin' -and $plan[1].Licence -eq 'IntelMSR.COPYING' -and $plan[1].LicenceOut -eq 'IntelMSR.COPYING.txt')
-$threw = $false; try { Get-PawnIOModulePlan -FileNames @('AMDFamily17.bin', 'Other.bin', 'COPYING') -SourceLines $sourceLines | Out-Null } catch { $threw = $true }
-Check "a module without a SOURCE.txt hash is refused" $threw
+$all = @(Get-PawnIOModulePlan -FileNames @('AMDFamily17.bin', 'Other.bin', 'bad name.bin', 'COPYING') -SourceLines $sourceLines 3>&1)
+$warned = @($all | Where-Object { $_ -is [Management.Automation.WarningRecord] }); $plan = @($all | Where-Object { $_ -isnot [Management.Automation.WarningRecord] })
+Check "a module SOURCE.txt does not list is ignored with a warning, not refused" ($plan.Count -eq 1 -and $plan[0].Module -eq 'AMDFamily17.bin' -and $warned.Count -eq 2 -and "$($warned[0])$($warned[1])" -match 'Other\.bin' -and "$($warned[0])$($warned[1])" -match 'bad name\.bin')
 $threw = $false; try { Get-PawnIOModulePlan -FileNames @('AMDFamily17.bin', 'SOURCE.txt') -SourceLines $sourceLines | Out-Null } catch { $threw = $true }
 Check "a module without a licence is refused" $threw
 $threw = $false; try { Get-PawnIOModulePlan -FileNames @('COPYING', 'SOURCE.txt') -SourceLines $sourceLines | Out-Null } catch { $threw = $true }
 Check "a modules folder without a module is refused" $threw
-$dist = @('lite-deck.exe', 'AMDFamily17.bin', 'AMDFamily17.COPYING.txt', 'IntelMSR.bin', 'IntelMSR.COPYING.txt', 'PawnIO_setup.exe')
-$files = @(Get-DistModuleFiles $dist)
-Check "dist folder: every module and its licence are installed" ($files.Count -eq 4 -and (@('AMDFamily17.bin', 'AMDFamily17.COPYING.txt', 'IntelMSR.bin', 'IntelMSR.COPYING.txt') | ForEach-Object { $files -contains $_ }) -notcontains $false)
-$threw = $false; try { Get-DistModuleFiles @('lite-deck.exe', 'IntelMSR.bin') | Out-Null } catch { $threw = $true }
-Check "dist folder: a module without its licence is refused" $threw
-$threw = $false; try { Get-DistModuleFiles @('lite-deck.exe', 'LICENSE') | Out-Null } catch { $threw = $true }
+$threw = $false; try { Get-PawnIOModulePlan -FileNames @('Other.bin', 'COPYING') -SourceLines $sourceLines 3>$null | Out-Null } catch { $threw = $true }
+Check "a modules folder without a listed module is refused" $threw
+Check "the manifest ships and installs with the fixed files" ($LdFiles -contains $LdModuleManifest -and $LdModuleManifest -like '*.SOURCE.txt')
+$dist = @('lite-deck.exe', 'AMDFamily17.bin', 'AMDFamily17.COPYING.txt', 'IntelMSR.bin', 'IntelMSR.COPYING.txt', 'PawnIO_setup.exe', $LdModuleManifest)
+$files = @(Get-DistModuleFiles -FileNames $dist -SourceLines $sourceLines)
+Check "dist folder: every listed module and its licence are installed" ($files.Count -eq 4 -and (@('AMDFamily17.bin', 'AMDFamily17.COPYING.txt', 'IntelMSR.bin', 'IntelMSR.COPYING.txt') | ForEach-Object { $files -contains $_ }) -notcontains $false)
+$all = @(Get-DistModuleFiles -FileNames ($dist + @('stray.bin', 'stray.COPYING.txt')) -SourceLines $sourceLines 3>&1)
+$warned = @($all | Where-Object { $_ -is [Management.Automation.WarningRecord] }); $files = @($all | Where-Object { $_ -isnot [Management.Automation.WarningRecord] })
+Check "dist folder: a stray module is ignored with a warning and does not block the install" ($files.Count -eq 4 -and $files -notcontains 'stray.bin' -and $warned.Count -eq 1 -and "$($warned[0])" -match 'stray\.bin')
+$files = @(Get-DistModuleFiles -FileNames @('AMDFamily17.bin', 'AMDFamily17.COPYING.txt', 'stray.bin') -SourceLines $sourceLines 3>$null)
+Check "dist folder: a stray module without a licence does not block the install either" ($files.Count -eq 2)
+$threw = $false; try { Get-DistModuleFiles -FileNames @('lite-deck.exe', 'IntelMSR.bin') -SourceLines $sourceLines | Out-Null } catch { $threw = $true }
+Check "dist folder: a listed module without its licence is refused" $threw
+$threw = $false; try { Get-DistModuleFiles -FileNames @('lite-deck.exe', 'LICENSE') -SourceLines $sourceLines | Out-Null } catch { $threw = $true }
 Check "dist folder: no module is refused" $threw
+$threw = $false; try { Get-DistModuleFiles -FileNames @('stray.bin', 'stray.COPYING.txt') -SourceLines $sourceLines 3>$null | Out-Null } catch { $threw = $true }
+Check "dist folder: no listed module is refused" $threw
+$installed = @('lite-deck.exe', 'AMDFamily17.bin', 'AMDFamily17.COPYING.txt', 'IntelMSR.bin', 'IntelMSR.COPYING.txt', 'mine.bin', 'notes.COPYING.txt')
+$stale = @(Get-StaleModuleFiles -InstalledNames $installed -InstalledSourceLines $sourceLines -NewFiles @('AMDFamily17.bin', 'AMDFamily17.COPYING.txt'))
+Check "upgrade: a module no longer shipped is removed with its licence, nothing else" ($stale.Count -eq 2 -and $stale -contains 'IntelMSR.bin' -and $stale -contains 'IntelMSR.COPYING.txt')
+$stale = @(Get-StaleModuleFiles -InstalledNames $installed -InstalledSourceLines $sourceLines -NewFiles @('AMDFamily17.bin', 'AMDFamily17.COPYING.txt', 'IntelMSR.bin', 'IntelMSR.COPYING.txt'))
+Check "upgrade: nothing is removed when the same modules ship" ($stale.Count -eq 0)
+$stale = @(Get-StaleModuleFiles -InstalledNames $installed -InstalledSourceLines @() -NewFiles @())
+Check "upgrade: without an installed manifest nothing is removed" ($stale.Count -eq 0)
 Check "legacy names are the former ones" ($LdLegacyServiceName -eq "LibreDeckSensors" -and $LdLegacyRunName -eq "libre-deck" -and $LdLegacyInstallDir -like "*\libre-deck" -and $LdLegacyInstallDir.StartsWith($env:ProgramFiles))
 Check "legacy names never match the new ones" ($LdLegacyServiceName -ne $LdServiceName -and $LdLegacyRunName -ne $LdRunName -and $LdLegacyInstallDir -ne $LdInstallDir -and $LdLegacyStateKey -ne $LdStateKey -and $LdLegacyWindowClass -ne $LdWindowClass)
 Check "legacy and new process lists are disjoint" (-not ($LdLegacyProcessNames | Where-Object { $LdProcessNames -contains $_ }))

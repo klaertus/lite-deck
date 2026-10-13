@@ -18,7 +18,8 @@ const CpuIdent kZen1{"AuthenticAMD", "AMD Ryzen 7 1700X Eight-Core Processor", 0
 const CpuIdent kZen4{"AuthenticAMD", "AMD Ryzen 7 7700X 8-Core Processor", 0x19, 0x61};
 const CpuIdent kZen5{"AuthenticAMD", "AMD Ryzen 7 9700X 8-Core Processor", 0x1A, 0x44};
 const CpuIdent kPhenom{"AuthenticAMD", "AMD Phenom(tm) II X6 1090T", 0x10, 10};
-const CpuIdent kAlderLake{"GenuineIntel", "12th Gen Intel(R) Core(TM) i7-12700K", 6, 151};
+// Reports the digital temperature sensor and package thermal management (CPUID.06H:EAX bits 0 and 6).
+const CpuIdent kAlderLake{"GenuineIntel", "12th Gen Intel(R) Core(TM) i7-12700K", 6, 151, (1u << 0) | (1u << 6)};
 
 struct FixedSource final : TempSource {
   double value;
@@ -157,6 +158,14 @@ TEST_CASE("the AMD source opens AMDFamily17.bin from the given folder (missing h
   const OpenResult r = temp_source_opener(L"C:\\does-not-exist", kZen4, amd)();
   CHECK_FALSE(r.source);
   CHECK(r.status == Status::ModuleMissing);  // the module is read before PawnIO is loaded
+  CHECK(r.detail == "AMDFamily17.bin missing, empty or over 1 MB next to the exe");  // today's text
+}
+
+TEST_CASE("the module-missing detail names the module the source needs") {
+  CHECK(module_missing_detail(L"C:\\lite-deck\\IntelMSR.bin") == "IntelMSR.bin missing, empty or over 1 MB next to the exe");
+  CHECK(module_missing_detail(L"C:\\lite-deck\\AMDFamily17.bin") ==
+        "AMDFamily17.bin missing, empty or over 1 MB next to the exe");
+  CHECK(module_missing_detail({}) == "the PawnIO module missing, empty or over 1 MB next to the exe");
 }
 
 TEST_CASE("a source registered next to the built-in ones is picked and published without other changes") {

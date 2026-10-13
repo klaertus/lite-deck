@@ -47,6 +47,12 @@ std::vector<unsigned char> read_file(const std::filesystem::path& p) {
 
 }  // namespace
 
+std::string module_missing_detail(const std::filesystem::path& module_file) {
+  const std::u8string name = module_file.filename().u8string();
+  const std::string shown = name.empty() ? std::string("the PawnIO module") : std::string(name.begin(), name.end());
+  return std::format("{} missing, empty or over 1 MB next to the exe", shown);
+}
+
 CpuIdent read_cpu_ident() {
   CpuIdent id;
   int r[4] = {};
@@ -59,6 +65,11 @@ CpuIdent read_cpu_ident() {
   __cpuid(r, 1);
   id.family = cpu_family(static_cast<std::uint32_t>(r[0]));
   id.model = cpu_model(static_cast<std::uint32_t>(r[0]));
+  __cpuid(r, 0);
+  if (r[0] >= 6) {
+    __cpuid(r, 6);
+    id.thermal_features = static_cast<std::uint32_t>(r[0]);
+  }
   __cpuid(r, static_cast<int>(0x80000000));
   if (static_cast<unsigned>(r[0]) >= 0x80000004) {
     char brand[49] = {};
@@ -120,7 +131,7 @@ OpenResult PawnIoSource::open(const std::filesystem::path& module_file, const Cp
   if (!amd_family17_supported(cpu.vendor, cpu.family)) return unsupported_cpu(cpu);
 
   const std::vector<unsigned char> blob = read_file(module_file);
-  if (blob.empty()) return {nullptr, Status::ModuleMissing, "AMDFamily17.bin missing, empty or over 1 MB next to the exe"};
+  if (blob.empty()) return {nullptr, Status::ModuleMissing, module_missing_detail(module_file)};
 
   std::unique_ptr<PawnIoSource> s(new PawnIoSource());
   s->offset_ = tdie_offset(cpu.brand);

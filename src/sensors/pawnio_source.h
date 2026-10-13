@@ -11,6 +11,9 @@ namespace ld::sensors {
 // InstallLocation of HKLM\...\Uninstall\PawnIO (64-bit view), else %ProgramFiles%\PawnIO; + PawnIOLib.dll.
 std::filesystem::path pawnio_dll_path();  // empty if no absolute path can be determined
 
+// The ModuleMissing detail for `module_file`: "<file name> missing, empty or over 1 MB next to the exe".
+std::string module_missing_detail(const std::filesystem::path& module_file);
+
 // The 64-bit Program Files folder from the known-folder API (empty on failure).
 std::filesystem::path program_files_dir();
 

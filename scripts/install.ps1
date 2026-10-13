@@ -27,7 +27,10 @@ if (Test-ServiceMarkedForDeletion -Name $LdServiceName) {
 }
 $src = $PSScriptRoot
 # Every PawnIO module of the folder (the sensors service picks the one for this CPU), with its licence.
-$moduleFiles = @(Get-DistModuleFiles @(Get-ChildItem -LiteralPath $src -File | ForEach-Object { $_.Name }))
+$srcManifest = Join-Path $src $LdModuleManifest
+if (-not (Test-Path -LiteralPath $srcManifest)) { throw "Missing file in ${src}: $LdModuleManifest (use the folder made by package.ps1)" }
+$moduleFiles = @(Get-DistModuleFiles -FileNames @(Get-ChildItem -LiteralPath $src -File | ForEach-Object { $_.Name }) `
+    -SourceLines @(Get-Content -LiteralPath $srcManifest))
 
 # 1. PawnIO: never installed without consent (a switch, or a yes to the question)
 $installPawnIO = $false
@@ -93,6 +96,16 @@ try {
     Stop-LiteDeck -Script "install.ps1"
     Wait-ProcessesExit -Names $LdProcessNames -Script "install.ps1"
     New-Item -ItemType Directory -Force -Path $LdInstallDir | Out-Null
+    # Modules a previous install put there and this package no longer ships (listed in the installed manifest).
+    $installedManifest = Join-Path $LdInstallDir $LdModuleManifest
+    if (Test-Path -LiteralPath $installedManifest) {
+        $installedNames = @(Get-ChildItem -LiteralPath $LdInstallDir -File | ForEach-Object { $_.Name })
+        $stale = @(Get-StaleModuleFiles -InstalledNames $installedNames -InstalledSourceLines @(Get-Content -LiteralPath $installedManifest) -NewFiles $moduleFiles)
+        foreach ($f in $stale) {
+            Remove-Item -LiteralPath (Join-Path $LdInstallDir $f) -Force
+            Write-Host "Removed $f (no longer shipped)."
+        }
+    }
     foreach ($f in $LdFiles + $moduleFiles) {
         $from = [IO.Path]::GetFullPath((Join-Path $src $f))
         $to = [IO.Path]::GetFullPath((Join-Path $LdInstallDir $f))

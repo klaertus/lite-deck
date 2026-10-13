@@ -47,7 +47,8 @@ struct OpenResult {
 ```
 
 Use the existing status codes (`src/sensors/sensor_block.h`): `PawnIoMissing` (PawnIOLib.dll or the
-driver is not installed), `ModuleMissing` (the module file is missing, empty or over 1 MB),
+driver is not installed), `ModuleMissing` (the module file is missing, empty or over 1 MB; build its
+detail with `module_missing_detail(module_file)`, which names your module),
 `ModuleRejected` (`pawnio_load` refused it), `AccessDenied` (`pawnio_open` refused), `UnsupportedCpu`
 and `ReadFailed`. Do not add codes: the daemon shows them as they are.
 
@@ -116,7 +117,10 @@ TempSourceEntry intel_package_entry() {
       .id = "intel-package",
       .name = "Intel package temperature (IA32_PACKAGE_THERM_STATUS)",
       .module = "IntelMSR.bin",
-      .matches = [](const CpuIdent& cpu) { return cpu.vendor == "GenuineIntel" && cpu.family == 6; },
+      .matches = [](const CpuIdent& cpu) {
+        constexpr std::uint32_t kPackageThermal = 1u << 6;  // CPUID.06H:EAX bit 6
+        return cpu.vendor == "GenuineIntel" && (cpu.thermal_features & kPackageThermal) != 0;
+      },
       .open = [](const std::filesystem::path& module_file, const CpuIdent& cpu) {
         return IntelPackageSource::open(module_file, cpu);
       },
@@ -124,8 +128,11 @@ TempSourceEntry intel_package_entry() {
 }
 ```
 
-Keep `matches` cheap and free of side effects: it only looks at the `CpuIdent`. Anything that needs
-more (a CPUID feature bit, a model list), check again in `open` and return `UnsupportedCpu` there.
+The example matches any Intel CPU that reports package thermal management, whatever its family:
+recent Intel CPUs are not all family 6. `CpuIdent::thermal_features` holds `CPUID.06H:EAX` (bit 0: the
+digital temperature sensor, bit 6: package thermal management). Keep `matches` cheap and free of side
+effects: it only looks at the `CpuIdent`. Anything that needs more (a model list, an MSR), check in
+`open` and return `UnsupportedCpu` there.
 Order matters only when two entries match the same CPU: put the more specific one first.
 
 ## Reading Intel package temperature
@@ -148,7 +155,8 @@ package °C  = tjmax - readout
 Points to respect:
 
 - **Availability.** `IA32_PACKAGE_THERM_STATUS` exists when CPUID leaf 6 reports package thermal
-  management (`CPUID.06H:EAX` bit 6). Without it, return `UnsupportedCpu`.
+  management (`CPUID.06H:EAX` bit 6, `CpuIdent::thermal_features`), whatever the family. The example
+  entry above only matches such CPUs; check it again in `open` if your source can be reached otherwise.
 - **TjMax.** Read `MSR_TEMPERATURE_TARGET` once in `open`. A TjMax of 0, or one outside a sane range
   (about 70 to 125 °C), means the value is not usable: fail rather than guess. Some older models do not
   implement that MSR; tools fall back to a per-model table, which is a guess to document if you add it.
@@ -181,14 +189,17 @@ std::optional<double> intel_package_celsius(std::uint64_t temperature_target, st
 
 ## The module and its licence
 
-`scripts/package.ps1` ships **every** `*.bin` of `third_party/pawnio-modules`, and `install.ps1` copies
-every module of the distribution folder next to `lite-deck-sensors.exe`. Nothing in the scripts names a
-module. For each module, `package.ps1` requires:
+`scripts/package.ps1` ships **every** `*.bin` of `third_party/pawnio-modules` that `SOURCE.txt` lists,
+with a copy of `SOURCE.txt` named `PawnIO-modules.SOURCE.txt`. `install.ps1` copies every module of the
+distribution folder that this copy lists next to `lite-deck-sensors.exe`, and on an upgrade removes the
+modules a previous install put there that the new package no longer ships. A `*.bin` that `SOURCE.txt`
+does not list is ignored with a warning, at both steps. Nothing in the scripts names a module. For each
+module, `package.ps1` requires:
 
 - **The signed binary, unmodified**, from a PawnIO.Modules release: `third_party/pawnio-modules/IntelMSR.bin`.
 - **An entry in `SOURCE.txt`**, in the same form as the AMD one: a first line `IntelMSR.bin - ...`, the
-  release, its URL, the licence and module source, and a line `SHA-256: <64 hex digits>`. The package
-  stops when a module has no entry or when the file does not match its hash.
+  release, its URL, the licence and module source, and a line `SHA-256: <64 hex digits>`. Without an
+  entry the module is not shipped; the package stops when the file does not match its hash.
 - **Its licence.** `IntelMSR.COPYING` when the module has its own licence text, else the shared
   `COPYING` (PawnIO.Modules is LGPL-2.1, so the shared one fits). It ships as `IntelMSR.COPYING.txt`.
 
@@ -203,8 +214,9 @@ The tests never load PawnIO or the driver.
   TjMax 0, and the bits around the fields (bits 15 and 23 of `0x1B1` set must not change the result).
   `tests/test_tctl.cpp` does the same for AMD.
 - **The selection.** `tests/test_temp_sources.cpp` checks the built-in registry and the selection for
-  AMD and Intel identities. Once your entry is registered, update its Intel case: `GenuineIntel`
-  family 6 must now pick your id, and AMD family 17h to 1Ah must still pick `amd-family17`.
+  AMD and Intel identities. Once your entry is registered, update its Intel case: a `GenuineIntel`
+  CPU with package thermal management must now pick your id, one without it none, and AMD family 17h
+  to 1Ah must still pick `amd-family17`.
 - **The service with a fake.** The test *a source registered next to the built-in ones is picked and
   published without other changes* registers a fake Intel source next to the built-in ones, runs it
   through `choose_temp_source`, `temp_source_opener` and the `Publisher`, and reads the value back from
@@ -224,7 +236,9 @@ A new source must be verified on a real CPU of the family before it is merged; t
 wiring, not the registers.
 
 - `lite-deck-sensors.exe --console`, from an administrator prompt, prints the status and the value
-  every second (it publishes in a `Local\` section when the service already owns the global one).
+  every second. When it is denied access to `Global\LiteDeckSensors` (not elevated, or the running
+  service holds that section), it publishes in `Local\LiteDeckSensors` instead, which the daemon does
+  not read. The console output is what to check.
 - The log of the service (`logs\sensors.log` next to the exe) names your source at startup.
 - The value follows a known tool (HWiNFO, LibreHardwareMonitor or the vendor's utility) within a degree
   or two, at idle and under a full load, for several minutes.

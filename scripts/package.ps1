@@ -29,6 +29,7 @@ foreach ($p in $plan) {
     Copy-Item -LiteralPath (Join-Path $modulesDir $p.Licence) -Destination (Join-Path $dist $p.LicenceOut)
     $moduleFiles += @($p.Module, $p.LicenceOut)
 }
+Copy-Item -LiteralPath (Join-Path $modulesDir "SOURCE.txt") -Destination (Join-Path $dist $LdModuleManifest)
 foreach ($s in "install.ps1", "uninstall.ps1", "install-lib.ps1") { Copy-Item -LiteralPath (Join-Path $PSScriptRoot $s) -Destination $dist }
 $notices = @("LICENSE", "THIRD_PARTY_NOTICES.md")
 foreach ($n in $notices) { Copy-Item -LiteralPath (Join-Path $root $n) -Destination $dist }
