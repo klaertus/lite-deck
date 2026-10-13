@@ -1,0 +1,3375 @@
+[
+ {
+  "category": "Time",
+  "description": "Local time, with or without seconds.",
+  "elements": [
+   {
+    "align": "center",
+    "color": "#ffffff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "time",
+    "kind": "text",
+    "label": "Time",
+    "max": 60,
+    "min": 10,
+    "role": "long_value",
+    "row": "middle",
+    "size": 28.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#ffffff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "hours_minutes",
+    "kind": "text",
+    "label": "Hours:minutes (seconds below)",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "seconds",
+    "kind": "text",
+    "label": "Seconds (below)",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "bottom",
+    "size": 20.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "",
+  "id": "clock",
+  "name": "Clock",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": true,
+     "key": "seconds",
+     "label": "Show seconds",
+     "type": "bool"
+    },
+    {
+     "default": false,
+     "hint": "Hours and minutes large, the seconds smaller underneath.",
+     "key": "seconds_below",
+     "label": "Seconds on a line below",
+     "show_if": {
+      "equals": true,
+      "field": "seconds"
+     },
+     "type": "bool"
+    },
+    {
+     "default": "open",
+     "group": "tap",
+     "key": "tap_action",
+     "label": "On tap",
+     "option_labels": [
+      "Nothing",
+      "Open Task Manager",
+      "Open a link, file or program"
+     ],
+     "options": [
+      "none",
+      "task_manager",
+      "open"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "ms-clock:",
+     "group": "tap",
+     "hint": "A link, a file, a folder or a program (%VARIABLES% are expanded). Runs with your rights, never as admin.",
+     "key": "tap_target",
+     "label": "Link, file or program",
+     "placeholder": "https://… or C:\\…\\app.exe",
+     "show_if": {
+      "equals": "open",
+      "field": "tap_action"
+     },
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "System",
+  "description": "CPU use in % with a 1-minute graph; temperature optional.",
+  "elements": [
+   {
+    "align": "center",
+    "color": "#00e0a0",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "value",
+    "kind": "text",
+    "label": "Percentage",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "label",
+    "kind": "text",
+    "label": "Label",
+    "max": 40,
+    "min": 8,
+    "role": "label",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "right",
+    "color": "#00e0a0",
+    "color_mode": "state",
+    "gradient": true,
+    "icon": false,
+    "key": "temp",
+    "kind": "text",
+    "label": "Temperature",
+    "max": 30,
+    "min": 8,
+    "role": "secondary",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#00e0a0",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "graph",
+    "kind": "graph",
+    "label": "Graph",
+    "max": 8,
+    "min": 8,
+    "row": "bottom",
+    "size": 8.0,
+    "visible": true,
+    "weight": 400
+   }
+  ],
+  "hue": "#00e0a0",
+  "id": "cpu_load",
+  "name": "CPU load",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": false,
+     "hint": "Needs the sensors service.",
+     "key": "show_temperature",
+     "label": "Show the temperature",
+     "type": "bool"
+    },
+    {
+     "default": 80.0,
+     "group": "thresholds",
+     "key": "warn",
+     "label": "Warning at (°C)",
+     "max": 120.0,
+     "min": 0.0,
+     "show_if": {
+      "equals": true,
+      "field": "show_temperature"
+     },
+     "type": "number"
+    },
+    {
+     "default": 90.0,
+     "group": "thresholds",
+     "key": "crit",
+     "label": "Critical at (°C)",
+     "max": 120.0,
+     "min": 0.0,
+     "show_if": {
+      "equals": true,
+      "field": "show_temperature"
+     },
+     "type": "number"
+    },
+    {
+     "default": 3.0,
+     "group": "thresholds",
+     "hint": "Stays in warning until the value is this far back. Avoids flicker.",
+     "key": "hysteresis",
+     "label": "Clear margin",
+     "max": 20,
+     "min": 0,
+     "show_if": {
+      "equals": true,
+      "field": "show_temperature"
+     },
+     "type": "number"
+    },
+    {
+     "default": 40.0,
+     "group": "gradient",
+     "key": "cold_at",
+     "label": "Cold at (°C)",
+     "max": 150.0,
+     "min": -50.0,
+     "show_if": {
+      "equals": true,
+      "field": "show_temperature"
+     },
+     "type": "number"
+    },
+    {
+     "default": "#4fa3ff",
+     "group": "gradient",
+     "key": "cold_color",
+     "label": "Cold color",
+     "show_if": {
+      "equals": true,
+      "field": "show_temperature"
+     },
+     "type": "color"
+    },
+    {
+     "default": 65.0,
+     "group": "gradient",
+     "key": "mid_at",
+     "label": "Mid at (°C)",
+     "max": 150.0,
+     "min": -50.0,
+     "show_if": {
+      "equals": true,
+      "field": "show_temperature"
+     },
+     "type": "number"
+    },
+    {
+     "default": "#ffffff",
+     "group": "gradient",
+     "key": "mid_color",
+     "label": "Mid color",
+     "show_if": {
+      "equals": true,
+      "field": "show_temperature"
+     },
+     "type": "color"
+    },
+    {
+     "default": 90.0,
+     "group": "gradient",
+     "key": "hot_at",
+     "label": "Hot at (°C)",
+     "max": 150.0,
+     "min": -50.0,
+     "show_if": {
+      "equals": true,
+      "field": "show_temperature"
+     },
+     "type": "number"
+    },
+    {
+     "default": "#ff5a3c",
+     "group": "gradient",
+     "key": "hot_color",
+     "label": "Hot color",
+     "show_if": {
+      "equals": true,
+      "field": "show_temperature"
+     },
+     "type": "color"
+    },
+    {
+     "default": "task_manager",
+     "group": "tap",
+     "key": "tap_action",
+     "label": "On tap",
+     "option_labels": [
+      "Nothing",
+      "Open Task Manager",
+      "Open a link, file or program"
+     ],
+     "options": [
+      "none",
+      "task_manager",
+      "open"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "group": "tap",
+     "hint": "A link, a file, a folder or a program (%VARIABLES% are expanded). Runs with your rights, never as admin.",
+     "key": "tap_target",
+     "label": "Link, file or program",
+     "placeholder": "https://… or C:\\…\\app.exe",
+     "show_if": {
+      "equals": "open",
+      "field": "tap_action"
+     },
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "System",
+  "description": "CPU temperature with a graph (needs the sensors service).",
+  "elements": [
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "label",
+    "kind": "text",
+    "label": "Label",
+    "max": 40,
+    "min": 8,
+    "role": "label",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#00e0a0",
+    "color_mode": "state",
+    "gradient": true,
+    "icon": false,
+    "key": "value",
+    "kind": "text",
+    "label": "Temperature",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#00e0a0",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "graph",
+    "kind": "graph",
+    "label": "Graph",
+    "max": 8,
+    "min": 8,
+    "row": "bottom",
+    "size": 8.0,
+    "visible": true,
+    "weight": 400
+   }
+  ],
+  "hue": "#00e0a0",
+  "id": "cpu_temp",
+  "name": "CPU temperature",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": 80.0,
+     "group": "thresholds",
+     "key": "warn",
+     "label": "Warning at (°C)",
+     "max": 120.0,
+     "min": 0.0,
+     "type": "number"
+    },
+    {
+     "default": 90.0,
+     "group": "thresholds",
+     "key": "crit",
+     "label": "Critical at (°C)",
+     "max": 120.0,
+     "min": 0.0,
+     "type": "number"
+    },
+    {
+     "default": 3.0,
+     "group": "thresholds",
+     "hint": "Stays in warning until the value is this far back. Avoids flicker.",
+     "key": "hysteresis",
+     "label": "Clear margin",
+     "max": 20,
+     "min": 0,
+     "type": "number"
+    },
+    {
+     "default": 40.0,
+     "group": "gradient",
+     "key": "cold_at",
+     "label": "Cold at (°C)",
+     "max": 150.0,
+     "min": -50.0,
+     "type": "number"
+    },
+    {
+     "default": "#4fa3ff",
+     "group": "gradient",
+     "key": "cold_color",
+     "label": "Cold color",
+     "type": "color"
+    },
+    {
+     "default": 65.0,
+     "group": "gradient",
+     "key": "mid_at",
+     "label": "Mid at (°C)",
+     "max": 150.0,
+     "min": -50.0,
+     "type": "number"
+    },
+    {
+     "default": "#ffffff",
+     "group": "gradient",
+     "key": "mid_color",
+     "label": "Mid color",
+     "type": "color"
+    },
+    {
+     "default": 90.0,
+     "group": "gradient",
+     "key": "hot_at",
+     "label": "Hot at (°C)",
+     "max": 150.0,
+     "min": -50.0,
+     "type": "number"
+    },
+    {
+     "default": "#ff5a3c",
+     "group": "gradient",
+     "key": "hot_color",
+     "label": "Hot color",
+     "type": "color"
+    },
+    {
+     "default": "task_manager",
+     "group": "tap",
+     "key": "tap_action",
+     "label": "On tap",
+     "option_labels": [
+      "Nothing",
+      "Open Task Manager",
+      "Open a link, file or program"
+     ],
+     "options": [
+      "none",
+      "task_manager",
+      "open"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "group": "tap",
+     "hint": "A link, a file, a folder or a program (%VARIABLES% are expanded). Runs with your rights, never as admin.",
+     "key": "tap_target",
+     "label": "Link, file or program",
+     "placeholder": "https://… or C:\\…\\app.exe",
+     "show_if": {
+      "equals": "open",
+      "field": "tap_action"
+     },
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "System",
+  "description": "Memory used, in GB of the total.",
+  "elements": [
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "label",
+    "kind": "text",
+    "label": "Label",
+    "max": 40,
+    "min": 8,
+    "role": "label",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#5aa9ff",
+    "color_mode": "state",
+    "gradient": false,
+    "icon": false,
+    "key": "value",
+    "kind": "text",
+    "label": "Value",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "unit",
+    "kind": "text",
+    "label": "Unit",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "bottom",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "#5aa9ff",
+  "id": "ram",
+  "name": "Memory (RAM)",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": 85.0,
+     "group": "thresholds",
+     "key": "warn",
+     "label": "Warning at (% used)",
+     "max": 100.0,
+     "min": 0.0,
+     "type": "number"
+    },
+    {
+     "default": 95.0,
+     "group": "thresholds",
+     "key": "crit",
+     "label": "Critical at (% used)",
+     "max": 100.0,
+     "min": 0.0,
+     "type": "number"
+    },
+    {
+     "default": 3.0,
+     "group": "thresholds",
+     "hint": "Stays in warning until the value is this far back. Avoids flicker.",
+     "key": "hysteresis",
+     "label": "Clear margin",
+     "max": 20,
+     "min": 0,
+     "type": "number"
+    },
+    {
+     "default": "task_manager",
+     "group": "tap",
+     "key": "tap_action",
+     "label": "On tap",
+     "option_labels": [
+      "Nothing",
+      "Open Task Manager",
+      "Open a link, file or program"
+     ],
+     "options": [
+      "none",
+      "task_manager",
+      "open"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "group": "tap",
+     "hint": "A link, a file, a folder or a program (%VARIABLES% are expanded). Runs with your rights, never as admin.",
+     "key": "tap_target",
+     "label": "Link, file or program",
+     "placeholder": "https://… or C:\\…\\app.exe",
+     "show_if": {
+      "equals": "open",
+      "field": "tap_action"
+     },
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "System",
+  "description": "GPU memory, temperature or usage.",
+  "elements": [
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "label",
+    "kind": "text",
+    "label": "Label",
+    "max": 40,
+    "min": 8,
+    "role": "label",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#ff7f50",
+    "color_mode": "state",
+    "gradient": true,
+    "icon": false,
+    "key": "value",
+    "kind": "text",
+    "label": "Value",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "unit",
+    "kind": "text",
+    "label": "Unit",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "bottom",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "right",
+    "color": "#ff7f50",
+    "color_mode": "state",
+    "gradient": true,
+    "icon": false,
+    "key": "temp",
+    "kind": "text",
+    "label": "Temperature",
+    "max": 30,
+    "min": 8,
+    "role": "secondary",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#ff7f50",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "graph",
+    "kind": "graph",
+    "label": "Graph",
+    "max": 8,
+    "min": 8,
+    "row": "bottom",
+    "size": 8.0,
+    "visible": true,
+    "weight": 400
+   }
+  ],
+  "hue": "#ff7f50",
+  "id": "gpu",
+  "name": "Graphics card",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": "vram",
+     "key": "mode",
+     "label": "Measure",
+     "option_labels": [
+      "Memory used",
+      "Temperature",
+      "Usage"
+     ],
+     "options": [
+      "vram",
+      "temp",
+      "usage"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": 0,
+     "hint": "0 = the most powerful one.",
+     "key": "index",
+     "label": "Graphics card",
+     "max": 7,
+     "min": 0,
+     "type": "int"
+    },
+    {
+     "default": false,
+     "key": "show_temperature",
+     "label": "Show the temperature",
+     "show_if": {
+      "equals": "usage",
+      "field": "mode"
+     },
+     "type": "bool"
+    },
+    {
+     "default": 75.0,
+     "group": "thresholds",
+     "key": "temp_warn",
+     "label": "Warning at (°C)",
+     "max": 120.0,
+     "min": 0.0,
+     "show_if": [
+      {
+       "equals": "temp",
+       "field": "mode"
+      },
+      {
+       "and": {
+        "equals": true,
+        "field": "show_temperature"
+       },
+       "equals": "usage",
+       "field": "mode"
+      }
+     ],
+     "type": "number"
+    },
+    {
+     "default": 85.0,
+     "group": "thresholds",
+     "key": "temp_crit",
+     "label": "Critical at (°C)",
+     "max": 120.0,
+     "min": 0.0,
+     "show_if": [
+      {
+       "equals": "temp",
+       "field": "mode"
+      },
+      {
+       "and": {
+        "equals": true,
+        "field": "show_temperature"
+       },
+       "equals": "usage",
+       "field": "mode"
+      }
+     ],
+     "type": "number"
+    },
+    {
+     "default": 3.0,
+     "group": "thresholds",
+     "hint": "Stays in warning until the value is this far back. Avoids flicker.",
+     "key": "hysteresis",
+     "label": "Clear margin",
+     "max": 20,
+     "min": 0,
+     "show_if": [
+      {
+       "equals": "temp",
+       "field": "mode"
+      },
+      {
+       "and": {
+        "equals": true,
+        "field": "show_temperature"
+       },
+       "equals": "usage",
+       "field": "mode"
+      }
+     ],
+     "type": "number"
+    },
+    {
+     "default": 90.0,
+     "group": "thresholds",
+     "key": "vram_warn",
+     "label": "Warning at (% used)",
+     "max": 100.0,
+     "min": 0.0,
+     "show_if": {
+      "equals": "vram",
+      "field": "mode"
+     },
+     "type": "number"
+    },
+    {
+     "default": 97.0,
+     "group": "thresholds",
+     "key": "vram_crit",
+     "label": "Critical at (% used)",
+     "max": 100.0,
+     "min": 0.0,
+     "show_if": {
+      "equals": "vram",
+      "field": "mode"
+     },
+     "type": "number"
+    },
+    {
+     "default": 40.0,
+     "group": "gradient",
+     "key": "cold_at",
+     "label": "Cold at (°C)",
+     "max": 150.0,
+     "min": -50.0,
+     "show_if": [
+      {
+       "equals": "temp",
+       "field": "mode"
+      },
+      {
+       "and": {
+        "equals": true,
+        "field": "show_temperature"
+       },
+       "equals": "usage",
+       "field": "mode"
+      }
+     ],
+     "type": "number"
+    },
+    {
+     "default": "#4fa3ff",
+     "group": "gradient",
+     "key": "cold_color",
+     "label": "Cold color",
+     "show_if": [
+      {
+       "equals": "temp",
+       "field": "mode"
+      },
+      {
+       "and": {
+        "equals": true,
+        "field": "show_temperature"
+       },
+       "equals": "usage",
+       "field": "mode"
+      }
+     ],
+     "type": "color"
+    },
+    {
+     "default": 65.0,
+     "group": "gradient",
+     "key": "mid_at",
+     "label": "Mid at (°C)",
+     "max": 150.0,
+     "min": -50.0,
+     "show_if": [
+      {
+       "equals": "temp",
+       "field": "mode"
+      },
+      {
+       "and": {
+        "equals": true,
+        "field": "show_temperature"
+       },
+       "equals": "usage",
+       "field": "mode"
+      }
+     ],
+     "type": "number"
+    },
+    {
+     "default": "#ffffff",
+     "group": "gradient",
+     "key": "mid_color",
+     "label": "Mid color",
+     "show_if": [
+      {
+       "equals": "temp",
+       "field": "mode"
+      },
+      {
+       "and": {
+        "equals": true,
+        "field": "show_temperature"
+       },
+       "equals": "usage",
+       "field": "mode"
+      }
+     ],
+     "type": "color"
+    },
+    {
+     "default": 90.0,
+     "group": "gradient",
+     "key": "hot_at",
+     "label": "Hot at (°C)",
+     "max": 150.0,
+     "min": -50.0,
+     "show_if": [
+      {
+       "equals": "temp",
+       "field": "mode"
+      },
+      {
+       "and": {
+        "equals": true,
+        "field": "show_temperature"
+       },
+       "equals": "usage",
+       "field": "mode"
+      }
+     ],
+     "type": "number"
+    },
+    {
+     "default": "#ff5a3c",
+     "group": "gradient",
+     "key": "hot_color",
+     "label": "Hot color",
+     "show_if": [
+      {
+       "equals": "temp",
+       "field": "mode"
+      },
+      {
+       "and": {
+        "equals": true,
+        "field": "show_temperature"
+       },
+       "equals": "usage",
+       "field": "mode"
+      }
+     ],
+     "type": "color"
+    },
+    {
+     "default": "task_manager",
+     "group": "tap",
+     "key": "tap_action",
+     "label": "On tap",
+     "option_labels": [
+      "Nothing",
+      "Open Task Manager",
+      "Open a link, file or program"
+     ],
+     "options": [
+      "none",
+      "task_manager",
+      "open"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "group": "tap",
+     "hint": "A link, a file, a folder or a program (%VARIABLES% are expanded). Runs with your rights, never as admin.",
+     "key": "tap_target",
+     "label": "Link, file or program",
+     "placeholder": "https://… or C:\\…\\app.exe",
+     "show_if": {
+      "equals": "open",
+      "field": "tap_action"
+     },
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "Time",
+  "description": "Weekday, day and month.",
+  "elements": [
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "weekday",
+    "kind": "text",
+    "label": "Weekday",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#ffffff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "day",
+    "kind": "text",
+    "label": "Day",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "month",
+    "kind": "text",
+    "label": "Month",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "bottom",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "",
+  "id": "date",
+  "name": "Date",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": "none",
+     "group": "tap",
+     "key": "tap_action",
+     "label": "On tap",
+     "option_labels": [
+      "Nothing",
+      "Open Task Manager",
+      "Open a link, file or program"
+     ],
+     "options": [
+      "none",
+      "task_manager",
+      "open"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "group": "tap",
+     "hint": "A link, a file, a folder or a program (%VARIABLES% are expanded). Runs with your rights, never as admin.",
+     "key": "tap_target",
+     "label": "Link, file or program",
+     "placeholder": "https://… or C:\\…\\app.exe",
+     "show_if": {
+      "equals": "open",
+      "field": "tap_action"
+     },
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "Weather & sky",
+  "description": "Temperature, sky and today's min and max for a city.",
+  "elements": [
+   {
+    "align": "center",
+    "color": "#ffd23f",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": true,
+    "key": "icon",
+    "kind": "icon",
+    "label": "Icon",
+    "max": 80,
+    "min": 10,
+    "row": "top",
+    "size": 26.0,
+    "visible": true,
+    "weight": 400
+   },
+   {
+    "align": "center",
+    "color": "#ffffff",
+    "color_mode": "gradient",
+    "gradient": true,
+    "icon": false,
+    "key": "temp",
+    "kind": "text",
+    "label": "Temperature",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "range",
+    "kind": "text",
+    "label": "Min / max",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "bottom",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#ffffff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "status",
+    "kind": "text",
+    "label": "Status",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "middle",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "#ffd23f",
+  "id": "weather",
+  "name": "Weather",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": "",
+     "key": "city",
+     "label": "City",
+     "placeholder": "Brussels",
+     "type": "string"
+    },
+    {
+     "default": "anomaly",
+     "group": "gradient",
+     "key": "gradient_basis",
+     "label": "Color by",
+     "option_labels": [
+      "Difference from normal",
+      "Actual temperature"
+     ],
+     "options": [
+      "anomaly",
+      "absolute"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": -8.0,
+     "group": "gradient",
+     "key": "cold_at",
+     "label": "Cold at (°C)",
+     "max": 30.0,
+     "min": -30.0,
+     "type": "number"
+    },
+    {
+     "default": "#4fa3ff",
+     "group": "gradient",
+     "key": "cold_color",
+     "label": "Cold color",
+     "type": "color"
+    },
+    {
+     "default": 0.0,
+     "group": "gradient",
+     "key": "mid_at",
+     "label": "Mid at (°C)",
+     "max": 30.0,
+     "min": -30.0,
+     "type": "number"
+    },
+    {
+     "default": "#ffffff",
+     "group": "gradient",
+     "key": "mid_color",
+     "label": "Mid color",
+     "type": "color"
+    },
+    {
+     "default": 8.0,
+     "group": "gradient",
+     "key": "hot_at",
+     "label": "Hot at (°C)",
+     "max": 30.0,
+     "min": -30.0,
+     "type": "number"
+    },
+    {
+     "default": "#ff5a3c",
+     "group": "gradient",
+     "key": "hot_color",
+     "label": "Hot color",
+     "type": "color"
+    },
+    {
+     "default": "open",
+     "group": "tap",
+     "key": "tap_action",
+     "label": "On tap",
+     "option_labels": [
+      "Nothing",
+      "Open Task Manager",
+      "Open a link, file or program"
+     ],
+     "options": [
+      "none",
+      "task_manager",
+      "open"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "https://open-meteo.com",
+     "group": "tap",
+     "hint": "A link, a file, a folder or a program (%VARIABLES% are expanded). Runs with your rights, never as admin.",
+     "key": "tap_target",
+     "label": "Link, file or program",
+     "placeholder": "https://… or C:\\…\\app.exe",
+     "show_if": {
+      "equals": "open",
+      "field": "tap_action"
+     },
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "Weather & sky",
+  "description": "Next sunrise and sunset for a city.",
+  "elements": [
+   {
+    "align": "center",
+    "color": "#ffd23f",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "status",
+    "kind": "text",
+    "label": "Status",
+    "max": 40,
+    "min": 10,
+    "role": "secondary",
+    "row": "middle",
+    "size": 26.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#ffffff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "city_hint",
+    "kind": "text",
+    "label": "City missing",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "middle",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "left",
+    "color": "#ffd23f",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "symbol1",
+    "kind": "text",
+    "label": "Sunrise symbol",
+    "max": 40,
+    "min": 10,
+    "role": "symbol",
+    "row": "line1",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "right",
+    "color": "#ffd23f",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "line1",
+    "kind": "text",
+    "label": "Sunrise",
+    "max": 40,
+    "min": 10,
+    "role": "two_line",
+    "row": "line1",
+    "size": 26.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "left",
+    "color": "#ffd23f",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "symbol2",
+    "kind": "text",
+    "label": "Sunset symbol",
+    "max": 40,
+    "min": 10,
+    "role": "symbol",
+    "row": "line2",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "right",
+    "color": "#ffd23f",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "line2",
+    "kind": "text",
+    "label": "Sunset",
+    "max": 40,
+    "min": 10,
+    "role": "two_line",
+    "row": "line2",
+    "size": 26.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "right",
+    "color": "#5ac8fa",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "online",
+    "kind": "text",
+    "label": "Online times dot",
+    "max": 20,
+    "min": 8,
+    "role": "symbol",
+    "row": "top",
+    "size": 10.0,
+    "visible": true,
+    "weight": 400
+   }
+  ],
+  "hue": "#ffd23f",
+  "id": "sun",
+  "name": "Sunrise / sunset",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": "",
+     "key": "city",
+     "label": "City",
+     "placeholder": "Brussels",
+     "type": "string"
+    },
+    {
+     "default": 7,
+     "hint": "0 = never.",
+     "key": "verify_days",
+     "label": "Check online every (days)",
+     "max": 30,
+     "min": 0,
+     "type": "int"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": true
+ },
+ {
+  "category": "Online data",
+  "description": "Bitcoin and gold prices in euros. Tap to refresh.",
+  "elements": [
+   {
+    "align": "center",
+    "color": "#f7931a",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "status",
+    "kind": "text",
+    "label": "Status",
+    "max": 40,
+    "min": 10,
+    "role": "secondary",
+    "row": "middle",
+    "size": 26.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "symbol1",
+    "kind": "text",
+    "label": "Bitcoin symbol",
+    "max": 40,
+    "min": 9,
+    "role": "symbol",
+    "row": "line1",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "right",
+    "color": "#f7931a",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "line1",
+    "kind": "text",
+    "label": "Bitcoin",
+    "max": 40,
+    "min": 9,
+    "role": "two_line",
+    "row": "line1",
+    "size": 26.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "symbol2",
+    "kind": "text",
+    "label": "Gold symbol",
+    "max": 40,
+    "min": 9,
+    "role": "symbol",
+    "row": "line2",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "right",
+    "color": "#f7931a",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "line2",
+    "kind": "text",
+    "label": "Gold",
+    "max": 40,
+    "min": 9,
+    "role": "two_line",
+    "row": "line2",
+    "size": 26.0,
+    "visible": true,
+    "weight": 700
+   }
+  ],
+  "hue": "#f7931a",
+  "id": "crypto_gold",
+  "name": "Bitcoin & gold",
+  "ring_states": [],
+  "schema": {
+   "fields": []
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": true
+ },
+ {
+  "category": "Time",
+  "description": "Tap: start or stop. Hold: save to a log file (at 0: the total).",
+  "elements": [
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "label",
+    "kind": "text",
+    "label": "Label",
+    "max": 40,
+    "min": 8,
+    "role": "label",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#4cd964",
+    "color_mode": "state",
+    "gradient": false,
+    "icon": false,
+    "key": "time",
+    "kind": "text",
+    "label": "Time",
+    "max": 60,
+    "min": 10,
+    "role": "long_value",
+    "row": "middle",
+    "size": 28.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "left",
+    "color": "#4cd964",
+    "color_mode": "state",
+    "gradient": false,
+    "icon": false,
+    "key": "state",
+    "kind": "text",
+    "label": "Running / paused",
+    "max": 40,
+    "min": 8,
+    "role": "symbol",
+    "row": "top",
+    "size": 22.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#4cd964",
+    "color_mode": "state",
+    "gradient": false,
+    "icon": false,
+    "key": "hours_minutes",
+    "kind": "text",
+    "label": "Hours:minutes (seconds below)",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "seconds",
+    "kind": "text",
+    "label": "Seconds (below)",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "bottom",
+    "size": 20.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "#4cd964",
+  "id": "stopwatch",
+  "name": "Stopwatch",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": "",
+     "hint": "Where a long press saves the time. Empty: the file shown.",
+     "key": "file",
+     "label": "Log file",
+     "placeholder": "Documents\\stopwatch_log.txt",
+     "type": "string"
+    },
+    {
+     "default": false,
+     "hint": "Hours and minutes large, the seconds smaller underneath.",
+     "key": "seconds_below",
+     "label": "Seconds on a line below",
+     "type": "bool"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "Media & sound",
+  "description": "Turn: volume. Press: mute.",
+  "elements": [],
+  "hue": "#3fb6ff",
+  "id": "volume",
+  "name": "Volume",
+  "ring_states": [
+   {
+    "brightness": "brightness",
+    "color": "color",
+    "key": "normal",
+    "label": "Normal"
+   },
+   {
+    "brightness": "muted_brightness",
+    "color": "muted_color",
+    "key": "muted",
+    "label": "Muted"
+   }
+  ],
+  "schema": {
+   "fields": [
+    {
+     "default": 2,
+     "key": "step",
+     "label": "Step (%)",
+     "max": 10,
+     "min": 1,
+     "type": "int"
+    },
+    {
+     "default": true,
+     "hint": "Moves in 2 % steps (an odd step rounds up); not over a window run as admin.",
+     "key": "windows_overlay",
+     "label": "Show Windows volume pop-up",
+     "type": "bool"
+    },
+    {
+     "default": "#00283e",
+     "group": "ring",
+     "key": "color",
+     "label": "Ring color: Normal",
+     "type": "color"
+    },
+    {
+     "default": 100,
+     "group": "ring",
+     "key": "brightness",
+     "label": "Ring brightness: Normal (%)",
+     "max": 100,
+     "min": 0,
+     "type": "int"
+    },
+    {
+     "default": "#3a3a3a",
+     "group": "ring",
+     "key": "muted_color",
+     "label": "Ring color: Muted",
+     "type": "color"
+    },
+    {
+     "default": 100,
+     "group": "ring",
+     "key": "muted_brightness",
+     "label": "Ring brightness: Muted (%)",
+     "max": 100,
+     "min": 0,
+     "type": "int"
+    }
+   ]
+  },
+  "slots": [
+   "knob"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "Media & sound",
+  "description": "Turn: input level. Press: mute.",
+  "elements": [],
+  "hue": "#9a6bff",
+  "id": "mic",
+  "name": "Microphone",
+  "ring_states": [
+   {
+    "brightness": "brightness",
+    "color": "color",
+    "key": "normal",
+    "label": "Normal"
+   },
+   {
+    "brightness": "muted_brightness",
+    "color": "muted_color",
+    "key": "muted",
+    "label": "Muted"
+   }
+  ],
+  "schema": {
+   "fields": [
+    {
+     "default": 2,
+     "key": "step",
+     "label": "Step (%)",
+     "max": 10,
+     "min": 1,
+     "type": "int"
+    },
+    {
+     "default": "#1e0e3e",
+     "group": "ring",
+     "key": "color",
+     "label": "Ring color: Normal",
+     "type": "color"
+    },
+    {
+     "default": 100,
+     "group": "ring",
+     "key": "brightness",
+     "label": "Ring brightness: Normal (%)",
+     "max": 100,
+     "min": 0,
+     "type": "int"
+    },
+    {
+     "default": "#ff0000",
+     "group": "ring",
+     "key": "muted_color",
+     "label": "Ring color: Muted",
+     "type": "color"
+    },
+    {
+     "default": 100,
+     "group": "ring",
+     "key": "muted_brightness",
+     "label": "Ring brightness: Muted (%)",
+     "max": 100,
+     "min": 0,
+     "type": "int"
+    }
+   ]
+  },
+  "slots": [
+   "knob"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "Media & sound",
+  "description": "Turn: next or previous track. Press: play or pause.",
+  "elements": [],
+  "hue": "#4cd964",
+  "id": "media",
+  "name": "Media controls",
+  "ring_states": [
+   {
+    "brightness": "brightness",
+    "color": "color",
+    "key": "normal",
+    "label": "Normal"
+   }
+  ],
+  "schema": {
+   "fields": [
+    {
+     "default": "#0c3a14",
+     "group": "ring",
+     "key": "color",
+     "label": "Ring color: Normal",
+     "type": "color"
+    },
+    {
+     "default": 100,
+     "group": "ring",
+     "key": "brightness",
+     "label": "Ring brightness: Normal (%)",
+     "max": 100,
+     "min": 0,
+     "type": "int"
+    }
+   ]
+  },
+  "slots": [
+   "knob"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "Media & sound",
+  "description": "Turn: skip forward or back in the current track.",
+  "elements": [],
+  "hue": "#4cd964",
+  "id": "seek",
+  "name": "Seek",
+  "ring_states": [
+   {
+    "brightness": "brightness",
+    "color": "color",
+    "key": "playing",
+    "label": "Playing"
+   },
+   {
+    "brightness": "idle_brightness",
+    "color": "idle_color",
+    "key": "stopped",
+    "label": "Stopped"
+   }
+  ],
+  "schema": {
+   "fields": [
+    {
+     "default": 10,
+     "key": "step_s",
+     "label": "Seconds per step",
+     "max": 60,
+     "min": 1,
+     "type": "int"
+    },
+    {
+     "default": "#4cd964",
+     "group": "ring",
+     "key": "color",
+     "label": "Ring color: Playing",
+     "type": "color"
+    },
+    {
+     "default": 30,
+     "group": "ring",
+     "key": "brightness",
+     "label": "Ring brightness: Playing (%)",
+     "max": 100,
+     "min": 0,
+     "type": "int"
+    },
+    {
+     "default": "#3d1f00",
+     "group": "ring",
+     "key": "idle_color",
+     "label": "Ring color: Stopped",
+     "type": "color"
+    },
+    {
+     "default": 100,
+     "group": "ring",
+     "key": "idle_brightness",
+     "label": "Ring brightness: Stopped (%)",
+     "max": 100,
+     "min": 0,
+     "type": "int"
+    }
+   ]
+  },
+  "slots": [
+   "knob"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "Media & sound",
+  "description": "Song title and artist, play state and progress.",
+  "elements": [
+   {
+    "align": "center",
+    "color": "#4cd964",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": true,
+    "key": "icon",
+    "kind": "icon",
+    "label": "Play / pause icon",
+    "max": 48,
+    "min": 8,
+    "row": "middle",
+    "size": 21.5,
+    "visible": true,
+    "weight": 400
+   },
+   {
+    "align": "center",
+    "color": "#ffffff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "title",
+    "kind": "text",
+    "label": "Title",
+    "max": 60,
+    "min": 10,
+    "row": "middle",
+    "size": 32.5,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#a5a5a5",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "artist",
+    "kind": "text",
+    "label": "Artist",
+    "max": 48,
+    "min": 8,
+    "row": "middle",
+    "size": 26.0,
+    "visible": true,
+    "weight": 400
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "idle",
+    "kind": "text",
+    "label": "\"Nothing playing\"",
+    "max": 60,
+    "min": 8,
+    "row": "middle",
+    "size": 22.5,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#4cd964",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "bar",
+    "kind": "graph",
+    "label": "Progress bar",
+    "max": 8,
+    "min": 8,
+    "row": "middle",
+    "size": 8.0,
+    "visible": true,
+    "weight": 400
+   }
+  ],
+  "hue": "#4cd964",
+  "id": "now_playing",
+  "name": "Now playing",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": 2,
+     "key": "scroll_speed",
+     "label": "Scroll speed",
+     "max": 10,
+     "min": 0.5,
+     "type": "number"
+    },
+    {
+     "default": "#ffffff",
+     "key": "color",
+     "label": "Color",
+     "type": "color"
+    }
+   ]
+  },
+  "slots": [
+   "zone"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "System",
+  "description": "Windows notifications, one at a time. Tap to dismiss.",
+  "elements": [
+   {
+    "align": "center",
+    "color": "#ffffff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "status",
+    "kind": "text",
+    "label": "Access message",
+    "max": 48,
+    "min": 12,
+    "row": "middle",
+    "size": 24.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "empty",
+    "kind": "text",
+    "label": "\"No notifications\"",
+    "max": 60,
+    "min": 8,
+    "row": "middle",
+    "size": 22.5,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#000000",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "count",
+    "kind": "text",
+    "label": "Counter",
+    "max": 40,
+    "min": 8,
+    "row": "middle",
+    "size": 22.5,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#5ac8fa",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "app",
+    "kind": "text",
+    "label": "App name",
+    "max": 48,
+    "min": 8,
+    "row": "middle",
+    "size": 24.5,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#ffffff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "age",
+    "kind": "text",
+    "label": "Age",
+    "max": 40,
+    "min": 8,
+    "row": "middle",
+    "size": 19.0,
+    "visible": true,
+    "weight": 400
+   },
+   {
+    "align": "center",
+    "color": "#ffffff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "message",
+    "kind": "text",
+    "label": "Message",
+    "max": 60,
+    "min": 8,
+    "row": "middle",
+    "size": 26.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "#5ac8fa",
+  "id": "notifications",
+  "name": "Notifications",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": 2,
+     "key": "scroll_speed",
+     "label": "Scroll speed",
+     "max": 10,
+     "min": 0.5,
+     "type": "number"
+    },
+    {
+     "default": "#ffffff",
+     "key": "text_color",
+     "label": "Text color",
+     "type": "color"
+    },
+    {
+     "default": "#000000",
+     "key": "bg_color",
+     "label": "Background color",
+     "type": "color"
+    }
+   ]
+  },
+  "slots": [
+   "zone"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "System",
+  "description": "Download speed with a graph, upload in the corner.",
+  "elements": [
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "label",
+    "kind": "text",
+    "label": "Label",
+    "max": 40,
+    "min": 8,
+    "role": "label",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "right",
+    "color": "#22d3ee",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "up",
+    "kind": "text",
+    "label": "Upload",
+    "max": 30,
+    "min": 8,
+    "role": "secondary",
+    "row": "top",
+    "size": 15.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#22d3ee",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "value",
+    "kind": "text",
+    "label": "Download",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#22d3ee",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "graph",
+    "kind": "graph",
+    "label": "Graph",
+    "max": 8,
+    "min": 8,
+    "row": "bottom",
+    "size": 8.0,
+    "visible": true,
+    "weight": 400
+   },
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "unit",
+    "kind": "text",
+    "label": "Unit",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "bottom",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "#22d3ee",
+  "id": "net_speed",
+  "name": "Network speed",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": "bytes",
+     "key": "unit",
+     "label": "Unit",
+     "option_labels": [
+      "MB/s",
+      "Mb/s"
+     ],
+     "options": [
+      "bytes",
+      "bits"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "auto",
+     "hint": "auto: every physical adapter; or a name such as Ethernet or Wi-Fi.",
+     "key": "interface",
+     "label": "Network adapter",
+     "placeholder": "auto",
+     "type": "string"
+    },
+    {
+     "default": "task_manager",
+     "group": "tap",
+     "key": "tap_action",
+     "label": "On tap",
+     "option_labels": [
+      "Nothing",
+      "Open Task Manager",
+      "Open a link, file or program"
+     ],
+     "options": [
+      "none",
+      "task_manager",
+      "open"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "group": "tap",
+     "hint": "A link, a file, a folder or a program (%VARIABLES% are expanded). Runs with your rights, never as admin.",
+     "key": "tap_target",
+     "label": "Link, file or program",
+     "placeholder": "https://… or C:\\…\\app.exe",
+     "show_if": {
+      "equals": "open",
+      "field": "tap_action"
+     },
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "System",
+  "description": "Delay to an address, and lost packets.",
+  "elements": [
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "label",
+    "kind": "text",
+    "label": "Label",
+    "max": 40,
+    "min": 8,
+    "role": "label",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "right",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "target",
+    "kind": "text",
+    "label": "Target",
+    "max": 30,
+    "min": 8,
+    "role": "secondary",
+    "row": "top",
+    "size": 15.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#a6e22e",
+    "color_mode": "state",
+    "gradient": false,
+    "icon": false,
+    "key": "value",
+    "kind": "text",
+    "label": "Latency",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#a6e22e",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "graph",
+    "kind": "graph",
+    "label": "Graph",
+    "max": 8,
+    "min": 8,
+    "row": "bottom",
+    "size": 8.0,
+    "visible": true,
+    "weight": 400
+   },
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "loss",
+    "kind": "text",
+    "label": "Loss",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "bottom",
+    "size": 15.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "#a6e22e",
+  "id": "ping",
+  "name": "Ping",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": "1.1.1.1",
+     "hint": "A name, an IP address, or gateway for your router.",
+     "key": "host",
+     "label": "Address",
+     "placeholder": "1.1.1.1",
+     "type": "string"
+    },
+    {
+     "default": 2,
+     "key": "interval_s",
+     "label": "Every (s)",
+     "max": 60,
+     "min": 1,
+     "type": "int"
+    },
+    {
+     "default": 1000,
+     "key": "timeout_ms",
+     "label": "Timeout (ms)",
+     "max": 5000,
+     "min": 200,
+     "type": "int"
+    },
+    {
+     "default": 80,
+     "group": "thresholds",
+     "key": "warn_ms",
+     "label": "Warning at (ms)",
+     "max": 5000,
+     "min": 1,
+     "type": "number"
+    },
+    {
+     "default": 10,
+     "group": "thresholds",
+     "hint": "Stays in warning until the value is this far back. Avoids flicker.",
+     "key": "hysteresis",
+     "label": "Clear margin",
+     "max": 100,
+     "min": 0,
+     "type": "number"
+    },
+    {
+     "default": "task_manager",
+     "group": "tap",
+     "key": "tap_action",
+     "label": "On tap",
+     "option_labels": [
+      "Nothing",
+      "Open Task Manager",
+      "Open a link, file or program"
+     ],
+     "options": [
+      "none",
+      "task_manager",
+      "open"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "group": "tap",
+     "hint": "A link, a file, a folder or a program (%VARIABLES% are expanded). Runs with your rights, never as admin.",
+     "key": "tap_target",
+     "label": "Link, file or program",
+     "placeholder": "https://… or C:\\…\\app.exe",
+     "show_if": {
+      "equals": "open",
+      "field": "tap_action"
+     },
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "System",
+  "description": "Free space of a drive, or its read and write speed.",
+  "elements": [
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "label",
+    "kind": "text",
+    "label": "Drive",
+    "max": 40,
+    "min": 8,
+    "role": "label",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "right",
+    "color": "#7c83ff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "write",
+    "kind": "text",
+    "label": "Write (I/O)",
+    "max": 30,
+    "min": 8,
+    "role": "secondary",
+    "row": "top",
+    "size": 15.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#7c83ff",
+    "color_mode": "state",
+    "gradient": false,
+    "icon": false,
+    "key": "value",
+    "kind": "text",
+    "label": "Value",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#7c83ff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "graph",
+    "kind": "graph",
+    "label": "Graph (I/O)",
+    "max": 8,
+    "min": 8,
+    "row": "bottom",
+    "size": 8.0,
+    "visible": true,
+    "weight": 400
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "unit",
+    "kind": "text",
+    "label": "Used / total (space)",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "bottom",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "rate_unit",
+    "kind": "text",
+    "label": "Unit (I/O)",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "bottom",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "#7c83ff",
+  "id": "disk",
+  "name": "Disk",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": "space",
+     "key": "mode",
+     "label": "Measure",
+     "option_labels": [
+      "Free space",
+      "Read & write speed"
+     ],
+     "options": [
+      "space",
+      "io"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "C:",
+     "hint": "A drive letter.",
+     "key": "drive",
+     "label": "Drive",
+     "placeholder": "C:",
+     "type": "string"
+    },
+    {
+     "default": 20,
+     "group": "thresholds",
+     "key": "free_warn",
+     "label": "Warning below (% free)",
+     "max": 100,
+     "min": 0,
+     "show_if": {
+      "equals": "space",
+      "field": "mode"
+     },
+     "type": "number"
+    },
+    {
+     "default": 10,
+     "group": "thresholds",
+     "key": "free_crit",
+     "label": "Critical below (% free)",
+     "max": 100,
+     "min": 0,
+     "show_if": {
+      "equals": "space",
+      "field": "mode"
+     },
+     "type": "number"
+    },
+    {
+     "default": 2,
+     "group": "thresholds",
+     "hint": "Stays in warning until the value is this far back. Avoids flicker.",
+     "key": "hysteresis",
+     "label": "Clear margin",
+     "max": 20,
+     "min": 0,
+     "show_if": {
+      "equals": "space",
+      "field": "mode"
+     },
+     "type": "number"
+    },
+    {
+     "default": "task_manager",
+     "group": "tap",
+     "key": "tap_action",
+     "label": "On tap",
+     "option_labels": [
+      "Nothing",
+      "Open Task Manager",
+      "Open a link, file or program"
+     ],
+     "options": [
+      "none",
+      "task_manager",
+      "open"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "group": "tap",
+     "hint": "A link, a file, a folder or a program (%VARIABLES% are expanded). Runs with your rights, never as admin.",
+     "key": "tap_target",
+     "label": "Link, file or program",
+     "placeholder": "https://… or C:\\…\\app.exe",
+     "show_if": {
+      "equals": "open",
+      "field": "tap_action"
+     },
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "Online data",
+  "description": "One number read from a web address (Home Assistant, NAS…).",
+  "elements": [
+   {
+    "align": "left",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "label",
+    "kind": "text",
+    "label": "Label",
+    "max": 40,
+    "min": 8,
+    "role": "label",
+    "row": "top",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   },
+   {
+    "align": "center",
+    "color": "#cf7bff",
+    "color_mode": "state",
+    "gradient": false,
+    "icon": false,
+    "key": "value",
+    "kind": "text",
+    "label": "Value",
+    "max": 80,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 36.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "unit",
+    "kind": "text",
+    "label": "Unit",
+    "max": 40,
+    "min": 8,
+    "role": "secondary",
+    "row": "bottom",
+    "size": 17.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "#cf7bff",
+  "id": "http_sensor",
+  "name": "Web value (JSON)",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": "",
+     "hint": "http or https.",
+     "key": "url",
+     "label": "Address",
+     "placeholder": "https://…",
+     "type": "string"
+    },
+    {
+     "default": "",
+     "hint": "Where the number is in the answer, such as items[0].value. Empty: the whole answer.",
+     "key": "json_path",
+     "label": "Value path",
+     "placeholder": "result.temperature",
+     "type": "string"
+    },
+    {
+     "default": "SENSOR",
+     "key": "label",
+     "label": "Label",
+     "type": "string"
+    },
+    {
+     "default": "",
+     "key": "unit",
+     "label": "Unit",
+     "type": "string"
+    },
+    {
+     "default": 1,
+     "key": "decimals",
+     "label": "Decimals",
+     "max": 3,
+     "min": 0,
+     "type": "int"
+    },
+    {
+     "default": 30,
+     "key": "interval_s",
+     "label": "Every (s)",
+     "max": 86400,
+     "min": 5,
+     "type": "int"
+    },
+    {
+     "default": "",
+     "key": "header_name",
+     "label": "Auth header (optional)",
+     "placeholder": "Authorization",
+     "type": "string"
+    },
+    {
+     "default": "",
+     "key": "header_value",
+     "label": "Header value",
+     "placeholder": "Bearer <token>",
+     "type": "secret"
+    },
+    {
+     "default": "off",
+     "group": "thresholds",
+     "key": "direction",
+     "label": "Warn when",
+     "option_labels": [
+      "Never",
+      "Above a level",
+      "Below a level"
+     ],
+     "options": [
+      "off",
+      "above",
+      "below"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": 0,
+     "group": "thresholds",
+     "key": "warn",
+     "label": "Warning at",
+     "max": 1000000000,
+     "min": -1000000000,
+     "show_if": {
+      "field": "direction",
+      "in": [
+       "above",
+       "below"
+      ]
+     },
+     "type": "number"
+    },
+    {
+     "default": 0,
+     "group": "thresholds",
+     "key": "crit",
+     "label": "Critical at",
+     "max": 1000000000,
+     "min": -1000000000,
+     "show_if": {
+      "field": "direction",
+      "in": [
+       "above",
+       "below"
+      ]
+     },
+     "type": "number"
+    },
+    {
+     "default": 0,
+     "group": "thresholds",
+     "hint": "Stays in warning until the value is this far back. Avoids flicker.",
+     "key": "hysteresis",
+     "label": "Clear margin",
+     "max": 1000000000,
+     "min": 0,
+     "show_if": {
+      "field": "direction",
+      "in": [
+       "above",
+       "below"
+      ]
+     },
+     "type": "number"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "Actions",
+  "description": "Press to start a program, open a link or a file, or run a command.",
+  "elements": [
+   {
+    "align": "center",
+    "color": "#4d9dff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": true,
+    "key": "icon",
+    "kind": "icon",
+    "label": "Icon",
+    "max": 80,
+    "min": 12,
+    "row": "middle",
+    "size": 48.0,
+    "visible": true,
+    "weight": 400
+   },
+   {
+    "align": "center",
+    "color": "#4d9dff",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "title",
+    "kind": "text",
+    "label": "Title",
+    "max": 60,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 26.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "label",
+    "kind": "text",
+    "label": "Label",
+    "max": 30,
+    "min": 8,
+    "role": "label",
+    "row": "bottom",
+    "size": 15.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "#4d9dff",
+  "id": "launcher",
+  "name": "Launcher",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": "program",
+     "key": "kind",
+     "label": "Action",
+     "option_labels": [
+      "Start a program",
+      "Open a link, file or folder",
+      "Run a command"
+     ],
+     "options": [
+      "program",
+      "open",
+      "command"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "hint": "The full path of an exe or a file. %VARIABLES% are expanded. Runs with your rights; a program that needs admin rights shows the Windows prompt.",
+     "key": "path",
+     "label": "Program",
+     "placeholder": "%LOCALAPPDATA%\\Programs\\App\\app.exe",
+     "show_if": {
+      "equals": "program",
+      "field": "kind"
+     },
+     "type": "string"
+    },
+    {
+     "default": "",
+     "hint": "Passed as they are, without a shell.",
+     "key": "args",
+     "label": "Arguments",
+     "show_if": {
+      "equals": "program",
+      "field": "kind"
+     },
+     "type": "string"
+    },
+    {
+     "default": "",
+     "hint": "Empty: the program's folder.",
+     "key": "working_dir",
+     "label": "Start in",
+     "show_if": {
+      "equals": "program",
+      "field": "kind"
+     },
+     "type": "string"
+    },
+    {
+     "default": false,
+     "hint": "Instead of starting another copy.",
+     "key": "focus_existing",
+     "label": "Bring it to the front if running",
+     "show_if": {
+      "equals": "program",
+      "field": "kind"
+     },
+     "type": "bool"
+    },
+    {
+     "default": "",
+     "hint": "Opened with its default program.",
+     "key": "target",
+     "label": "Link, file or folder",
+     "placeholder": "https://example.com",
+     "show_if": {
+      "equals": "open",
+      "field": "kind"
+     },
+     "type": "string"
+    },
+    {
+     "default": "",
+     "hint": "Runs in a shell with your rights, as if typed in a terminal.",
+     "key": "command_line",
+     "label": "Command line",
+     "placeholder": "ipconfig /flushdns",
+     "show_if": {
+      "equals": "command",
+      "field": "kind"
+     },
+     "type": "string"
+    },
+    {
+     "default": "cmd",
+     "key": "shell",
+     "label": "Shell",
+     "option_labels": [
+      "Command Prompt",
+      "PowerShell"
+     ],
+     "options": [
+      "cmd",
+      "powershell"
+     ],
+     "show_if": {
+      "equals": "command",
+      "field": "kind"
+     },
+     "type": "enum"
+    },
+    {
+     "default": "visible",
+     "key": "window",
+     "label": "Command window",
+     "option_labels": [
+      "Shown",
+      "Hidden"
+     ],
+     "options": [
+      "visible",
+      "hidden"
+     ],
+     "show_if": {
+      "equals": "command",
+      "field": "kind"
+     },
+     "type": "enum"
+    },
+    {
+     "default": "program",
+     "key": "icon_source",
+     "label": "Icon",
+     "option_labels": [
+      "Program icon",
+      "Picture file",
+      "Emoji or symbol",
+      "No icon (title only)"
+     ],
+     "options": [
+      "program",
+      "image",
+      "glyph",
+      "none"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "hint": "A PNG, JPG, ICO or BMP file. %VARIABLES% are expanded.",
+     "key": "image",
+     "label": "Picture file",
+     "placeholder": "%USERPROFILE%\\Pictures\\icon.png",
+     "show_if": {
+      "equals": "image",
+      "field": "icon_source"
+     },
+     "type": "string"
+    },
+    {
+     "default": "🚀",
+     "hint": "An emoji, or a Segoe Fluent Icons symbol by its code (U+E713).",
+     "key": "glyph",
+     "label": "Emoji or symbol",
+     "show_if": {
+      "equals": "glyph",
+      "field": "icon_source"
+     },
+     "type": "string"
+    },
+    {
+     "default": "#4d9dff",
+     "key": "glyph_color",
+     "label": "Symbol color",
+     "show_if": {
+      "equals": "glyph",
+      "field": "icon_source"
+     },
+     "type": "color"
+    },
+    {
+     "default": "",
+     "hint": "Empty: the program's name or the URL's host.",
+     "key": "label",
+     "label": "Label",
+     "type": "string"
+    },
+    {
+     "default": "",
+     "hint": "Shown large when there is no icon. Empty: the label.",
+     "key": "title",
+     "label": "Title",
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ },
+ {
+  "category": "Actions",
+  "description": "Press to send a key shortcut or to type a text.",
+  "elements": [
+   {
+    "align": "center",
+    "color": "#ff4fd8",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": true,
+    "key": "icon",
+    "kind": "icon",
+    "label": "Icon",
+    "max": 80,
+    "min": 12,
+    "row": "middle",
+    "size": 48.0,
+    "visible": true,
+    "weight": 400
+   },
+   {
+    "align": "center",
+    "color": "#ff4fd8",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "title",
+    "kind": "text",
+    "label": "Title",
+    "max": 60,
+    "min": 10,
+    "role": "value",
+    "row": "middle",
+    "size": 26.0,
+    "visible": true,
+    "weight": 700
+   },
+   {
+    "align": "center",
+    "color": "#8c8c8c",
+    "color_mode": "fixed",
+    "gradient": false,
+    "icon": false,
+    "key": "label",
+    "kind": "text",
+    "label": "Label",
+    "max": 30,
+    "min": 8,
+    "role": "label",
+    "row": "bottom",
+    "size": 15.0,
+    "visible": true,
+    "weight": 600
+   }
+  ],
+  "hue": "#ff4fd8",
+  "id": "hotkey",
+  "name": "Hotkey",
+  "ring_states": [],
+  "schema": {
+   "fields": [
+    {
+     "default": "combo",
+     "key": "mode",
+     "label": "Send",
+     "option_labels": [
+      "Key shortcut(s)",
+      "Typed text"
+     ],
+     "options": [
+      "combo",
+      "text"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "hint": "Ctrl, Alt, Shift or Win and a key, joined by +; up to 8 shortcuts, separated by commas. A window run as admin does not get them.",
+     "key": "keys",
+     "label": "Keys",
+     "placeholder": "Ctrl+Shift+M, Enter",
+     "show_if": {
+      "equals": "combo",
+      "field": "mode"
+     },
+     "type": "string"
+    },
+    {
+     "default": 50,
+     "key": "delay_ms",
+     "label": "Delay between shortcuts (ms)",
+     "max": 2000,
+     "min": 0,
+     "show_if": {
+      "equals": "combo",
+      "field": "mode"
+     },
+     "type": "int"
+    },
+    {
+     "default": "",
+     "hint": "Typed as it is, up to 1000 characters.",
+     "key": "text",
+     "label": "Text",
+     "show_if": {
+      "equals": "text",
+      "field": "mode"
+     },
+     "type": "string"
+    },
+    {
+     "default": "glyph",
+     "key": "icon_source",
+     "label": "Icon",
+     "option_labels": [
+      "Emoji or symbol",
+      "Picture file",
+      "No icon (title only)"
+     ],
+     "options": [
+      "glyph",
+      "image",
+      "none"
+     ],
+     "type": "enum"
+    },
+    {
+     "default": "",
+     "hint": "A PNG, JPG, ICO or BMP file. %VARIABLES% are expanded.",
+     "key": "image",
+     "label": "Picture file",
+     "placeholder": "%USERPROFILE%\\Pictures\\icon.png",
+     "show_if": {
+      "equals": "image",
+      "field": "icon_source"
+     },
+     "type": "string"
+    },
+    {
+     "default": "⌨️",
+     "hint": "An emoji, or a Segoe Fluent Icons symbol by its code (U+E713).",
+     "key": "glyph",
+     "label": "Emoji or symbol",
+     "show_if": {
+      "equals": "glyph",
+      "field": "icon_source"
+     },
+     "type": "string"
+    },
+    {
+     "default": "#ff4fd8",
+     "key": "glyph_color",
+     "label": "Symbol color",
+     "show_if": {
+      "equals": "glyph",
+      "field": "icon_source"
+     },
+     "type": "color"
+    },
+    {
+     "default": "",
+     "hint": "Empty: the keys.",
+     "key": "label",
+     "label": "Label",
+     "type": "string"
+    },
+    {
+     "default": "",
+     "hint": "Shown large when there is no icon. Empty: the label.",
+     "key": "title",
+     "label": "Title",
+     "type": "string"
+    }
+   ]
+  },
+  "slots": [
+   "key"
+  ],
+  "two_line": false
+ }
+]

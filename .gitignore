@@ -1,0 +1,16 @@
+# prototype artefacts
+proto/img/
+proto/events.log
+__pycache__/
+# build
+build/
+out/
+dist/
+.vs/
+*.user
+sim/
+.superpowers/
+# local tool and editor state
+.claude/
+.vscode/
+.idea/

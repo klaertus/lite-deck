@@ -1,0 +1,199 @@
+{
+ "appearance": {
+  "font": "Segoe UI",
+  "italic": false
+ },
+ "device": {
+  "brightness": 60,
+  "ring_brightness": 100,
+  "ring_colors": [
+   "#3e0000",
+   "#002132",
+   "#1b3500",
+   "#3d1f00"
+  ]
+ },
+ "keys": [
+  {
+   "module": "cpu_load",
+   "settings": {
+    "cold_at": 40.0,
+    "cold_color": "#4fa3ff",
+    "crit": 90.0,
+    "hot_at": 90.0,
+    "hot_color": "#ff5a3c",
+    "hysteresis": 3.0,
+    "mid_at": 65.0,
+    "mid_color": "#ffffff",
+    "show_temperature": true,
+    "tap_action": "task_manager",
+    "tap_target": "",
+    "warn": 80.0
+   }
+  },
+  {
+   "module": "gpu",
+   "settings": {
+    "cold_at": 40.0,
+    "cold_color": "#4fa3ff",
+    "hot_at": 90.0,
+    "hot_color": "#ff5a3c",
+    "hysteresis": 3.0,
+    "index": 0,
+    "mid_at": 65.0,
+    "mid_color": "#ffffff",
+    "mode": "usage",
+    "show_temperature": true,
+    "tap_action": "task_manager",
+    "tap_target": "",
+    "temp_crit": 85.0,
+    "temp_warn": 75.0,
+    "vram_crit": 97.0,
+    "vram_warn": 90.0
+   }
+  },
+  {
+   "module": "ram",
+   "settings": {
+    "crit": 95.0,
+    "hysteresis": 3.0,
+    "tap_action": "task_manager",
+    "tap_target": "",
+    "warn": 85.0
+   }
+  },
+  {
+   "module": "gpu",
+   "settings": {
+    "cold_at": 40.0,
+    "cold_color": "#4fa3ff",
+    "hot_at": 90.0,
+    "hot_color": "#ff5a3c",
+    "hysteresis": 3.0,
+    "index": 0,
+    "mid_at": 65.0,
+    "mid_color": "#ffffff",
+    "mode": "vram",
+    "show_temperature": false,
+    "tap_action": "task_manager",
+    "tap_target": "",
+    "temp_crit": 85.0,
+    "temp_warn": 75.0,
+    "vram_crit": 97.0,
+    "vram_warn": 90.0
+   }
+  },
+  {
+   "module": "stopwatch",
+   "settings": {
+    "file": "",
+    "seconds_below": false
+   }
+  },
+  {
+   "module": "clock",
+   "settings": {
+    "seconds": true,
+    "seconds_below": false,
+    "tap_action": "open",
+    "tap_target": "ms-clock:"
+   }
+  },
+  {
+   "module": "date",
+   "settings": {
+    "tap_action": "none",
+    "tap_target": ""
+   }
+  },
+  {
+   "module": "weather",
+   "settings": {
+    "city": "",
+    "cold_at": -8.0,
+    "cold_color": "#4fa3ff",
+    "gradient_basis": "anomaly",
+    "hot_at": 8.0,
+    "hot_color": "#ff5a3c",
+    "mid_at": 0.0,
+    "mid_color": "#ffffff",
+    "tap_action": "open",
+    "tap_target": "https://open-meteo.com"
+   }
+  },
+  {
+   "module": "sun",
+   "settings": {
+    "city": "",
+    "verify_days": 7
+   }
+  },
+  {
+   "module": "crypto_gold",
+   "settings": {}
+  }
+ ],
+ "knobs": [
+  {
+   "module": "volume",
+   "settings": {
+    "brightness": 100,
+    "color": "#00283e",
+    "muted_brightness": 100,
+    "muted_color": "#3a3a3a",
+    "step": 2,
+    "windows_overlay": true
+   }
+  },
+  {
+   "module": "mic",
+   "settings": {
+    "brightness": 100,
+    "color": "#1e0e3e",
+    "muted_brightness": 100,
+    "muted_color": "#ff0000",
+    "step": 2
+   }
+  },
+  {
+   "module": "media",
+   "settings": {
+    "brightness": 100,
+    "color": "#0c3a14"
+   }
+  },
+  {
+   "module": "seek",
+   "settings": {
+    "brightness": 30,
+    "color": "#4cd964",
+    "idle_brightness": 100,
+    "idle_color": "#3d1f00",
+    "step_s": 10
+   }
+  }
+ ],
+ "strip": [
+  {
+   "module": "now_playing",
+   "settings": {
+    "color": "#ffffff",
+    "scroll_speed": 2
+   },
+   "width": 430
+  },
+  {
+   "module": "notifications",
+   "settings": {
+    "bg_color": "#000000",
+    "scroll_speed": 2,
+    "text_color": "#ffffff"
+   },
+   "width": 370
+  }
+ ],
+ "version": 1,
+ "web": {
+  "port": 7878
+ }
+}

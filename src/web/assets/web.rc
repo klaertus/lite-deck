@@ -1,0 +1,9 @@
+// src/web/assets/web.rc: the config page, embedded in the executable (never served from disk).
+// Paths are relative to this file. Linked into lite-deck.exe and lite-deck-tests.exe.
+INDEX_HTML RCDATA "index.html"
+APP_CSS    RCDATA "app.css"
+APP_JS     RCDATA "app.js"
+APPEARANCE_JS RCDATA "appearance.js"
+ELEMENTS_JS   RCDATA "elements.js"
+SETTINGS_JS   RCDATA "settings.js"
+DECK_JS       RCDATA "deck.js"

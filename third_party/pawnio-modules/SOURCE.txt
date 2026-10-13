@@ -1,0 +1,6 @@
+AMDFamily17.bin - signed PawnIO module, unmodified.
+Release: namazso/PawnIO.Modules 0.2.11
+URL: https://github.com/namazso/PawnIO.Modules/releases/download/0.2.11/release_0_2_11.zip
+License: LGPL-2.1 (see COPYING). Source: https://github.com/namazso/PawnIO.Modules/blob/main/AMDFamily17.p
+Used by lite-deck-sensors.exe through PawnIOLib (pawnio_load / pawnio_execute "ioctl_read_smn").
+SHA-256: DAE74615761B78BDF064DFB3E136252DDCC6FC727D88F14738D0E5800D427A91

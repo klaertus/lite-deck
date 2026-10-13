@@ -1,0 +1,50 @@
+name: release
+
+# Builds the distribution folder (the same as scripts/package.ps1 locally: Release build, unit tests,
+# the signed PawnIO setup, the installer scripts and the notices), zips it and publishes it.
+# - Pushing a tag such as v1.0.0 creates a GitHub Release with the zip attached.
+# - Running it by hand (workflow_dispatch) only uploads the zip as a build artifact.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package (build, test, dist\lite-deck)
+        shell: powershell
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+        run: ./scripts/package.ps1
+
+      - name: Zip
+        id: zip
+        shell: powershell
+        run: |
+          $name = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { "dev-$($env:GITHUB_SHA.Substring(0,7))" }
+          $zip = "lite-deck-$name-x64.zip"
+          Compress-Archive -Path dist/lite-deck -DestinationPath $zip
+          "zip=$zip" >> $env:GITHUB_OUTPUT
+
+      - name: Upload the zip as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lite-deck-dist
+          path: ${{ steps.zip.outputs.zip }}
+          if-no-files-found: error
+
+      - name: Publish the GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.zip.outputs.zip }}
+          generate_release_notes: true

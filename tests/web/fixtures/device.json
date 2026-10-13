@@ -1,0 +1,17 @@
+{
+ "cols": 5,
+ "id": "mirabox-n4pro",
+ "key_size": {
+  "height": 112,
+  "width": 112
+ },
+ "knob_rings": true,
+ "knobs": 4,
+ "name": "MiraBox N4 Pro E",
+ "rows": 2,
+ "strip": {
+  "height": 112,
+  "width": 800
+ },
+ "vendor_app": "StreamDock"
+}

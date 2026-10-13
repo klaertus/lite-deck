@@ -1,0 +1,48 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The same steps as a local build: MSVC through vswhere and its developer shell, CMake + Ninja,
+      # Release, then the unit tests. Tests that need the device, the network or a person are marked
+      # doctest::skip() and do not run. The page's Node tests (tests/web/*.test.js) run after them,
+      # with the Node of the runner; the Edge scripts (*.edge.js) are run by hand only.
+      - name: Build and test (Release)
+        shell: powershell
+        env:
+          LD_REQUIRE_NODE: "1"
+          # Golden image differences are saved under %TEMP%\ld_golden_actual (uploaded on failure).
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+        run: ./scripts/build.ps1 -Config Release -Test
+
+      - name: Upload binaries
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lite-deck-release
+          path: |
+            build/Release/lite-deck.exe
+            build/Release/lite-deck-sensors.exe
+            LICENSE
+            THIRD_PARTY_NOTICES.md
+          if-no-files-found: error
+
+      - name: Upload golden image differences
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-actual
+          path: ${{ runner.temp }}/ld_golden_actual/
+          if-no-files-found: ignore

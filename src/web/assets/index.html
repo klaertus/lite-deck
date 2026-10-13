@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lite-deck</title>
+<link rel="stylesheet" href="/app.css">
+<script src="/elements.js" defer></script>
+<script src="/appearance.js" defer></script>
+<script src="/settings.js" defer></script>
+<script src="/deck.js" defer></script>
+<script src="/app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <h1 class="brand">lite-deck</h1>
+  <nav class="tabs" aria-label="Sections">
+    <a id="tab-slots" href="#slots" aria-controls="panel">Slots</a>
+    <a id="tab-look" href="#look" aria-controls="panel">Look</a>
+    <a id="tab-hardware" href="#hardware" aria-controls="panel">Hardware</a>
+  </nav>
+  <span class="spacer"></span>
+  <span id="device-name" class="device-name"></span>
+  <span id="device" class="chip" role="status"></span>
+  <button id="undo" type="button" class="ghost" aria-label="Undo" title="Undo (Ctrl+Z)" disabled>↶</button>
+  <button id="redo" type="button" class="ghost" aria-label="Redo" title="Redo (Ctrl+Y)" disabled>↷</button>
+  <span id="save" class="chip" role="status"></span>
+  <button id="errors-btn" type="button" class="chip bad" aria-expanded="false" aria-controls="error-list" hidden></button>
+</header>
+<div id="error-list" class="notice bad" hidden></div>
+<div id="banner" class="notice warn" role="alert" hidden></div>
+<main>
+  <section class="stage" aria-labelledby="deck-h">
+    <h2 id="deck-h" class="sr-only">Deck</h2>
+    <div id="deck" class="deck">
+      <div class="screen">
+        <div id="keys" class="keys" role="group" aria-label="Keys"></div>
+        <div id="strip" class="strip" role="group" aria-label="Touch strip zones"></div>
+        <div id="strip-caps" class="strip-caps" aria-hidden="true"></div>
+      </div>
+      <div id="knobs" class="knobs" role="group" aria-label="Knobs"></div>
+      <p id="model" class="model"></p>
+    </div>
+    <p id="hint" class="hint">Click a key, strip zone or knob to choose what it shows, or use Tab and the arrow keys; Escape in the panel comes back here. Changes apply instantly.</p>
+  </section>
+  <section id="panel" class="panel" aria-labelledby="panel-h"></section>
+</main>
+<div id="toast" class="notice toast" role="status"></div>
+<div id="alert" class="sr-only" role="alert"></div>
+<datalist id="font-list"></datalist>
+</body>
+</html>
