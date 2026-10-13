@@ -7,9 +7,10 @@
 #include <string>
 #include "core/log.h"
 #include "core/strings.h"
-#include "sensors/pawnio_source.h"
+#include "sensors/cpu_ident.h"
 #include "sensors/publisher.h"
 #include "sensors/shared_mapping.h"
+#include "sensors/temp_sources.h"
 
 namespace {
 
@@ -55,7 +56,11 @@ DWORD run(bool console) {
     ld::log_error("sensors: cannot determine the executable folder");
     return ERROR_BAD_PATHNAME;
   }
-  const auto module = dir / L"AMDFamily17.bin";
+  // The CPU is read once; the first registered source that matches it is used (temp_sources.h).
+  const ld::sensors::CpuIdent cpu = ld::sensors::read_cpu_ident();
+  const ld::sensors::SoundTempSources sources = ld::sensors::sound_temp_sources(ld::sensors::builtin_temp_sources());
+  for (const std::string& problem : sources.dropped) ld::log_error("sensors: {}", problem);
+  const ld::sensors::TempSourceEntry* chosen = ld::sensors::choose_temp_source(cpu, sources.entries);
   std::wstring name = ld::sensors::kMappingName;
   unsigned long err = 0;
   auto writer = ld::sensors::BlockWriter::create(name.c_str(), ld::sensors::kMappingSddl, &err);
@@ -70,11 +75,15 @@ DWORD run(bool console) {
     ld::log_error("sensors: cannot create the shared section (error {})", err);
     return err ? err : ERROR_GEN_FAILURE;
   }
-  ld::sensors::Publisher pub(writer->block(), [module] { return ld::sensors::PawnIoSource::open(module); });
+  ld::sensors::Publisher pub(writer->block(), ld::sensors::temp_source_opener(dir, cpu, chosen));
   pub.on_status = [](ld::sensors::Status s, const std::string& detail) {
     ld::log_info("sensors: status {}{}{}", ld::sensors::status_name(s), detail.empty() ? "" : " - ", detail);
   };
-  ld::log_info("sensors: started (module {})", ld::narrow(module.wstring()));
+  if (chosen)
+    ld::log_info("sensors: started (source {} - {}, module {})", chosen->id, chosen->name,
+                 ld::narrow((dir / std::filesystem::path(chosen->module)).wstring()));
+  else
+    ld::log_info("sensors: started (no temperature source for {} family {:x}h)", cpu.vendor, cpu.family);
   for (;;) {
     pub.tick(ld::sensors::unix_now_ms());
     if (console) {

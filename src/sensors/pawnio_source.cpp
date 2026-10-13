@@ -100,13 +100,24 @@ std::filesystem::path program_files_dir() {
   return result;
 }
 
+TempSourceEntry amd_family17_entry() {
+  return TempSourceEntry{
+      .id = "amd-family17",
+      .name = "AMD family 17h-1Ah (Tctl/Tdie)",
+      .module = "AMDFamily17.bin",
+      .matches = [](const CpuIdent& cpu) { return amd_family17_supported(cpu.vendor, cpu.family); },
+      .open = [](const std::filesystem::path& module_file, const CpuIdent& cpu) {
+        return PawnIoSource::open(module_file, cpu);
+      },
+  };
+}
+
 OpenResult PawnIoSource::open(const std::filesystem::path& module_file) {
   return open(module_file, read_cpu_ident());
 }
 
 OpenResult PawnIoSource::open(const std::filesystem::path& module_file, const CpuIdent& cpu) {
-  if (!amd_family17_supported(cpu.vendor, cpu.family))
-    return {nullptr, Status::UnsupportedCpu, std::format("{} family {:x}h", cpu.vendor, cpu.family)};
+  if (!amd_family17_supported(cpu.vendor, cpu.family)) return unsupported_cpu(cpu);
 
   const std::vector<unsigned char> blob = read_file(module_file);
   if (blob.empty()) return {nullptr, Status::ModuleMissing, "AMDFamily17.bin missing, empty or over 1 MB next to the exe"};
