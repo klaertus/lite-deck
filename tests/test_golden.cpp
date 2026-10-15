@@ -1,8 +1,14 @@
-// tests/test_golden.cpp: the default rendering of every module, pixel for pixel. The strip images
-// (now_playing_*, notifications_*) have never changed. The key images were
-// regenerated once, for the design system look, after a visual review. Never regenerate
-// them to make a change pass.
+// tests/test_golden.cpp: the default rendering of every module, compared with its reference image.
+// The comparison tolerates font antialiasing (a Windows update changing the system fonts): at most
+// 1% of the pixels may differ by more than 48 on a channel, and at most 0.1% by more than 128
+// (ImageDiff in golden.h; the measurements behind it in golden.cpp). The "golden comparator" tests
+// below check that a real change still fails. The strip images (now_playing_*, notifications_*)
+// have never changed. The key images were regenerated once, for the design system look, after a
+// visual review. Never regenerate them to make a change pass.
 #include <doctest/doctest.h>
+#include <algorithm>
+#include <cstdint>
+#include <string>
 #include "golden.h"
 #include "module_fixtures.h"
 
@@ -89,4 +95,90 @@ TEST_CASE("golden: notifications") {
                             {{1, L"Outlook", L"Meeting", L"Room 4"},
                              {2, L"Discord", L"Bob", L"A message far too long for the zone, so it scrolls along"}}),
          "notifications_two_long", 370);
+}
+
+// The comparator itself, on synthetic keys: a clock-like text and a bar, drawn by the renderer.
+namespace {
+struct Key {
+  std::wstring text = L"13:37";
+  float dx = 0, size = 28;
+  ld::Rgb color{255, 255, 255};
+  bool bar = true;          // a 60 x 4 bar under the text
+  bool dot = false;         // an extra 4 x 4 dot in a corner
+  int width = 112, height = 112;
+};
+
+GoldenImage render(ld::Renderer& r, const Key& k) {
+  ld::Surface s(r, k.width, k.height);
+  {
+    ld::Canvas c = s.canvas();
+    c.clear(ld::Rgb{0, 0, 0});
+    ld::TextStyle st;
+    st.size = k.size;
+    st.color = k.color;
+    c.text(k.text, ld::RectF{k.dx, 20, 112, 50}, st);
+    if (k.bar) c.fill_rect(ld::RectF{26, 80, 60, 4}, ld::Rgb{0, 200, 255});
+    if (k.dot) c.fill_rect(ld::RectF{100, 8, 4, 4}, ld::Rgb{255, 80, 0});
+  }
+  return GoldenImage{k.width, k.height, s.pixels()};
+}
+
+// Font antialiasing noise: every partly covered pixel (an edge) moves by up to 40 levels, as the
+// font update did (measured max 50, on a few pixels only); solid pixels do not move.
+GoldenImage antialias_noise(GoldenImage img) {
+  unsigned seed = 12345;
+  for (std::size_t i = 0; i < img.bgra.size(); i += 4) {
+    const auto [lo, hi] = std::minmax({img.bgra[i], img.bgra[i + 1], img.bgra[i + 2]});
+    if (hi == 0 || (hi == 255 && lo == 255)) continue;  // background or solid ink
+    seed = seed * 1103515245u + 12345u;
+    const int shift = static_cast<int>((seed >> 16) % 81) - 40;
+    for (std::size_t c = 0; c < 3; ++c)
+      img.bgra[i + c] = static_cast<std::uint8_t>(std::clamp(img.bgra[i + c] + shift, 0, 255));
+  }
+  return img;
+}
+}  // namespace
+
+TEST_CASE("golden comparator: identical images pass, exactly") {
+  ld::Renderer r;
+  const GoldenImage a = render(r, Key{});
+  const ImageDiff d = compare_images(a, render(r, Key{}));
+  CHECK(d.exact());
+  CHECK(d.tolerable());
+}
+
+TEST_CASE("golden comparator: antialiasing noise passes, not exactly") {
+  ld::Renderer r;
+  const GoldenImage a = render(r, Key{});
+  const ImageDiff d = compare_images(a, antialias_noise(a));
+  CHECK_FALSE(d.exact());
+  CHECK(d.changed > 100);  // the noise touches many pixels
+  CHECK(d.strong == 0);
+  CHECK(d.tolerable());
+}
+
+TEST_CASE("golden comparator: a real change fails") {
+  ld::Renderer r;
+  const GoldenImage a = render(r, Key{});
+  const auto fails = [&](const Key& k) {
+    const ImageDiff d = compare_images(a, render(r, k));
+    INFO("changed " << d.changed << ", differ " << d.differing << ", strong " << d.strong);
+    CHECK_FALSE(d.tolerable());
+  };
+  SUBCASE("text of another colour") { fails(Key{.color = ld::Rgb{255, 140, 0}}); }
+  SUBCASE("text a little darker") { fails(Key{.color = ld::Rgb{180, 180, 180}}); }
+  SUBCASE("text moved by 2 px") { fails(Key{.dx = 2}); }
+  SUBCASE("text moved by 1 px") { fails(Key{.dx = 1}); }
+  SUBCASE("text of another size") { fails(Key{.size = 30}); }
+  SUBCASE("one digit replaced") { fails(Key{.text = L"13:38"}); }
+  SUBCASE("an extra element") { fails(Key{.dot = true}); }
+  SUBCASE("a missing element") { fails(Key{.bar = false}); }
+  SUBCASE("an image of another size") {
+    const ImageDiff d = compare_images(a, render(r, Key{.height = 110}));
+    CHECK_FALSE(d.same_size);
+    CHECK_FALSE(d.tolerable());
+  }
+  SUBCASE("noise on top of a real change still fails") {
+    CHECK_FALSE(compare_images(a, antialias_noise(render(r, Key{.text = L"13:38"}))).tolerable());
+  }
 }

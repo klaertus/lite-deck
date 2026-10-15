@@ -7,7 +7,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <iomanip>
 #include <optional>
+#include <sstream>
+#include <string>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -76,6 +79,17 @@ const std::uint8_t* at(const std::vector<std::uint8_t>& px, int width, int x, in
   return &px[(static_cast<std::size_t>(y) * width + x) * 4];
 }
 
+std::string describe(const ImageDiff& d) {
+  if (!d.same_size) return "size differs";
+  if (d.pixels == 0) return "empty image";
+  std::ostringstream o;
+  o << std::fixed << std::setprecision(2) << d.changed << " of " << d.pixels << " pixel(s) changed, " << d.differing
+    << " differ (" << 100.0 * d.differing / d.pixels << "%, limit " << 100 * ImageDiff::kMaxDiffering << "%), "
+    << d.strong << " strongly (" << 100.0 * d.strong / d.pixels << "%, limit " << 100 * ImageDiff::kMaxStrong
+    << "%), max delta " << d.max_delta;
+  return o.str();
+}
+
 }  // namespace
 
 namespace {
@@ -110,17 +124,44 @@ void check_golden(ld::Renderer& r, ld::Surface& s, const std::string& name) {
     FAIL_CHECK("golden missing: " << file.string() << " (capture it with LD_UPDATE_GOLDEN=1)");
     return;
   }
-  std::size_t diff = 0;
-  if (expected->size() != actual.size()) {
-    diff = actual.size() / 4;
-  } else {
-    for (std::size_t i = 0; i < actual.size(); i += 4)
-      if (std::memcmp(&actual[i], &(*expected)[i], 4) != 0) ++diff;
+  // read_png gives an empty vector for a file of another size: compare_images then sees 0 x 0.
+  const bool sized = !expected->empty();
+  const ImageDiff d = compare_images(GoldenImage{sized ? s.width() : 0, sized ? s.height() : 0, *expected},
+                                     GoldenImage{s.width(), s.height(), actual});
+  if (d.exact()) return;
+  if (d.tolerable()) {
+    MESSAGE(name << ": not exact, within tolerance: " << describe(d));
+    return;
   }
-  if (diff == 0) return;
   const fs::path out = fs::temp_directory_path() / "ld_golden_actual" / (name + ".png");
   write_png(r, out, s.width(), s.height(), actual);
-  FAIL_CHECK(name << ": " << diff << " pixel(s) differ from " << file.string() << "; actual image: " << out.string());
+  FAIL_CHECK(name << ": " << describe(d) << " from " << file.string() << "; actual image: " << out.string());
+}
+
+// The tolerance (ImageDiff constants). A Windows update (2026-10-14) replaced segoeui.ttf: the
+// edges of the text then changed on all 40 reference images (up to 6.4% of the pixels touched),
+// but by a delta of at most 50, so at most 0.16% of the pixels differ (delta > 48, disk_io) and
+// none strongly (delta > 128). The limits (1% and 0.1%) keep a margin of 6x above that and stay
+// below what a real change gives: a text moved by 2 px, a digit replaced, an element of another
+// colour, size or an extra one all change tens of pixels by more than 128 or hundreds by more than
+// 48 (see the "golden comparator" tests). On a 112 x 112 key, 0.1% is 12 pixels.
+ImageDiff compare_images(const GoldenImage& expected, const GoldenImage& actual) {
+  ImageDiff d;
+  d.pixels = static_cast<std::size_t>(expected.width) * expected.height;
+  d.same_size = expected.width == actual.width && expected.height == actual.height &&
+                expected.bgra.size() == d.pixels * 4 && actual.bgra.size() == d.pixels * 4;
+  if (!d.same_size) return d;
+  for (std::size_t i = 0; i < expected.bgra.size(); i += 4) {
+    int delta = 0;
+    for (std::size_t c = 0; c < 4; ++c)
+      delta = std::max(delta, std::abs(int{expected.bgra[i + c]} - int{actual.bgra[i + c]}));
+    if (delta == 0) continue;
+    ++d.changed;
+    d.max_delta = std::max(d.max_delta, delta);
+    if (delta > ImageDiff::kDiffDelta) ++d.differing;
+    if (delta > ImageDiff::kStrongDelta) ++d.strong;
+  }
+  return d;
 }
 
 Ink ink(ld::Surface& s, int x0, int y0, int x1, int y1) {

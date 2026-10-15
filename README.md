@@ -348,6 +348,8 @@ Bug reports and pull requests are welcome. Please:
 - keep each change focused, and add or update tests (`scripts/build.ps1 -Test` must pass);
 - never regenerate the reference images in `tests/golden` just to make a test pass. A change to
   the rendering should be deliberate and visible in the review;
+- know that the reference images are compared with a tolerance for font antialiasing (at most
+  1% of the pixels off by more than 48 on a channel, 0.1% by more than 128; see `tests/golden.h`);
 - follow the existing style: C++20, `/W4` clean, no threads or blocking calls in modules;
 - write comments that describe what the code does, in English.
 
