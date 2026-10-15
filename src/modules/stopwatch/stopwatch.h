@@ -7,6 +7,6 @@
 #include "modules/module.h"
 
 namespace ld {
-std::filesystem::path stopwatch_file(const std::string& setting);  // "" -> Documents\stopwatch_log.txt
+std::filesystem::path stopwatch_file(const std::string& setting);  // "" -> Documents\stopwatch_log.csv
 ModuleInfo stopwatch_module_info();
 }  // namespace ld

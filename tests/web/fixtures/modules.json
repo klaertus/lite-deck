@@ -1586,7 +1586,7 @@
  },
  {
   "category": "Time",
-  "description": "Tap: start or stop. Hold: save to a log file (at 0: the total).",
+  "description": "Tap: start or stop. Hold: save to a CSV log (at 0: the total).",
   "elements": [
    {
     "align": "center",
@@ -1682,10 +1682,10 @@
    "fields": [
     {
      "default": "",
-     "hint": "Where a long press saves the time. Empty: the file shown.",
+     "hint": "The CSV file (; separated, for Excel) a long press adds a line to. Empty: the file shown. Its folder must exist.",
      "key": "file",
-     "label": "Log file",
-     "placeholder": "Documents\\stopwatch_log.txt",
+     "label": "CSV log file",
+     "placeholder": "Documents\\stopwatch_log.csv",
      "type": "string"
     },
     {

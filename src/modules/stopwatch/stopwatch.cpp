@@ -29,23 +29,11 @@ bool read_file(const std::filesystem::path& p, std::string& out) {
   return true;
 }
 
-bool write_file_atomic(const std::filesystem::path& p, const std::string& content) {
-  std::filesystem::path tmp = p;
-  tmp += ".tmp";
-  bool ok = false;
-  {
-    std::ofstream f(tmp, std::ios::binary | std::ios::trunc);
-    if (!f) return false;
-    f << content;
-    f.close();
-    ok = !f.fail();
-  }
-  if (ok) ok = MoveFileExW(tmp.c_str(), p.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
-  if (!ok) {
-    std::error_code ec;
-    std::filesystem::remove(tmp, ec);
-  }
-  return ok;
+std::tm local_tm(long long ms) {
+  std::time_t tt = static_cast<std::time_t>(ms / 1000);
+  std::tm tm{};
+  localtime_s(&tm, &tt);
+  return tm;
 }
 
 constexpr Rgb kRunning{0x4c, 0xd9, 0x64};  // the "running" green of the strip and the seek ring
@@ -71,15 +59,32 @@ public:
     below_ = s.at("seconds_below").get<bool>();
     nlohmann::json st = ctx.load_state();
     if (st.is_object()) {
+      auto integer = [&st](const char* k, long long& v) {
+        if (!st.contains(k) || !st[k].is_number_integer()) return false;
+        v = st[k].get<long long>();
+        return true;
+      };
       if (st.contains("running") && st["running"].is_boolean()) running_ = st["running"].get<bool>();
-      if (st.contains("started_ms") && st["started_ms"].is_number_integer())
-        started_ms_ = st["started_ms"].get<long long>();
-      else
-        running_ = false;
-      if (st.contains("accumulated_ms") && st["accumulated_ms"].is_number_integer())
-        accumulated_ms_ = st["accumulated_ms"].get<long long>();
+      if (!integer("started_ms", started_ms_)) running_ = false;
+      integer("accumulated_ms", accumulated_ms_);
+      integer("session_start_ms", session_start_ms_);
+      integer("paused_ms", paused_ms_);
+      integer("paused_at_ms", paused_at_ms_);
+      integer("pauses", pauses_);
       if (accumulated_ms_ < 0) accumulated_ms_ = 0;
+      if (paused_ms_ < 0) paused_ms_ = 0;
+      if (pauses_ < 0) pauses_ = 0;
+      if (session_start_ms_ < 0) session_start_ms_ = 0;
     }
+    // A session saved before the CSV log (no start recorded) started when its time began, and a paused
+    // one counts as paused from now on. A paused session missing its pause time is repaired the same way.
+    const long long now = to_ms(wall_now());
+    if (session_start_ms_ == 0 && (running_ || accumulated_ms_ > 0)) {
+      session_start_ms_ = (running_ ? started_ms_ : now) - accumulated_ms_;
+      if (session_start_ms_ <= 0) session_start_ms_ = 1;
+      paused_at_ms_ = 0;
+    }
+    if (session_start_ms_ && !running_ && paused_at_ms_ <= 0) paused_at_ms_ = now;
     if (running_) start_ticking();
   }
 
@@ -131,18 +136,49 @@ private:
     return accumulated_ms_ + (run > 0 ? run : 0);
   }
 
+  // Paused time of the session so far. Wall-clock based like elapsed_ms(): time while the daemon was
+  // down counts as paused if the stopwatch was paused, and as counted time if it was running.
+  long long paused_total_ms() const {
+    long long current = !running_ && session_start_ms_ ? to_ms(wall_now()) - paused_at_ms_ : 0;
+    return paused_ms_ + (current > 0 ? current : 0);
+  }
+
   void persist() {
-    ctx_->save_state({{"running", running_}, {"started_ms", started_ms_}, {"accumulated_ms", accumulated_ms_}});
+    ctx_->save_state({{"running", running_},
+                      {"started_ms", started_ms_},
+                      {"accumulated_ms", accumulated_ms_},
+                      {"session_start_ms", session_start_ms_},
+                      {"paused_ms", paused_ms_},
+                      {"paused_at_ms", paused_at_ms_},
+                      {"pauses", pauses_}});
+  }
+
+  void reset() {
+    accumulated_ms_ = started_ms_ = session_start_ms_ = paused_ms_ = paused_at_ms_ = pauses_ = 0;
+    running_ = false;
+    ctx_->cancel(tick_);
+    tick_ = 0;
   }
 
   void toggle() {
+    const long long now = to_ms(wall_now());
     if (running_) {
       accumulated_ms_ = elapsed_ms();
       running_ = false;
+      paused_at_ms_ = now;
+      ++pauses_;
       ctx_->cancel(tick_);
       tick_ = 0;
     } else {
-      started_ms_ = to_ms(wall_now());
+      if (session_start_ms_ == 0) {  // a new session
+        session_start_ms_ = now;
+        paused_ms_ = 0;
+        pauses_ = 0;
+      } else {
+        paused_ms_ = paused_total_ms();
+      }
+      paused_at_ms_ = 0;
+      started_ms_ = now;
       running_ = true;
       start_ticking();
     }
@@ -153,6 +189,10 @@ private:
   void long_press() {
     long long ms = elapsed_ms();
     if (!running_ && ms == 0) {
+      if (session_start_ms_) {  // started and paused within the same instant: nothing to keep
+        reset();
+        persist();
+      }
       std::string content;
       std::error_code ec;
       const bool missing = !std::filesystem::exists(file_, ec) && !ec;
@@ -161,29 +201,24 @@ private:
         show(Overlay::Error, Duration(3000));
         return;
       }
-      total_s_ = sum_entries(content);
+      total_s_ = sum_csv_active(content);
       show(Overlay::Total, Duration(5000));
       return;
     }
     refresh_time_zone();
-    std::time_t tt = sc::to_time_t(wall_now());
-    std::tm tm{};
-    localtime_s(&tm, &tt);
-    std::string content;
-    std::error_code ec;
-    // An error (access denied, bad name) is not "missing": never overwrite a log we could not read.
-    const bool missing = !std::filesystem::exists(file_, ec) && !ec;
-    bool readable = read_file(file_, content) || missing;
-    if (!readable || !write_file_atomic(file_, append_entry(content, format_entry(tm, ms / 1000)))) {
-      log_error("stopwatch: cannot update {}", narrow(file_.wstring()));
+    CsvRow row;
+    row.start = local_tm(session_start_ms_);
+    row.end = local_tm(to_ms(wall_now()));
+    row.active_s = ms / 1000;
+    row.paused_s = paused_total_ms() / 1000;
+    row.pauses = pauses_;
+    // Missing folder, file open in Excel: the session is kept so that the user can retry.
+    if (const unsigned long err = append_csv_row(file_, row)) {
+      log_error("stopwatch: cannot write {} (error {})", narrow(file_.wstring()), err);
       show(Overlay::Error, Duration(3000));
       return;
     }
-    accumulated_ms_ = 0;
-    started_ms_ = 0;
-    running_ = false;
-    ctx_->cancel(tick_);
-    tick_ = 0;
+    reset();
     persist();
     show(Overlay::Saved, Duration(1500));
   }
@@ -209,6 +244,10 @@ private:
   bool running_ = false;
   long long started_ms_ = 0;
   long long accumulated_ms_ = 0;
+  long long session_start_ms_ = 0;  // wall ms of the session's first start, 0: no session
+  long long paused_ms_ = 0;         // paused time of the finished pauses
+  long long paused_at_ms_ = 0;      // wall ms the current pause began
+  long long pauses_ = 0;
   long long total_s_ = 0;
   Overlay overlay_ = Overlay::None;
   TimerId tick_ = 0, overlay_timer_ = 0;
@@ -226,9 +265,9 @@ std::filesystem::path stopwatch_file(const std::string& setting) {
     const DWORD n = GetEnvironmentVariableW(L"USERPROFILE", profile, MAX_PATH);
     if (n > 0 && n < MAX_PATH) docs = std::wstring(profile, n);
   }
-  if (setting.empty()) return docs / L"stopwatch_log.txt";
+  if (setting.empty()) return docs / L"stopwatch_log.csv";
   std::wstring w = widen(setting);
-  const DWORD needed = ExpandEnvironmentStringsW(w.c_str(), nullptr, 0);  // "%USERPROFILE%\x.txt"
+  const DWORD needed = ExpandEnvironmentStringsW(w.c_str(), nullptr, 0);  // "%USERPROFILE%\x.csv"
   if (needed > 0) {
     std::wstring expanded(needed, L'\0');
     const DWORD got = ExpandEnvironmentStringsW(w.c_str(), expanded.data(), needed);
@@ -245,13 +284,13 @@ ModuleInfo stopwatch_module_info() {
   ModuleInfo m;
   m.id = "stopwatch";
   m.name = "Stopwatch";
-  m.description = "Tap: start or stop. Hold: save to a log file (at 0: the total).";
+  m.description = "Tap: start or stop. Hold: save to a CSV log (at 0: the total).";
   m.category = "Time";
   m.hue = "#4cd964";
   m.slots = {SlotKind::Key};
   m.settings_schema = nlohmann::json::parse(R"json({"fields":[
-    {"key":"file","type":"string","default":"","label":"Log file","placeholder":"Documents\\stopwatch_log.txt",
-     "hint":"Where a long press saves the time. Empty: the file shown."},
+    {"key":"file","type":"string","default":"","label":"CSV log file","placeholder":"Documents\\stopwatch_log.csv",
+     "hint":"The CSV file (; separated, for Excel) a long press adds a line to. Empty: the file shown. Its folder must exist."},
     {"key":"seconds_below","type":"bool","default":false,"label":"Seconds on a line below",
      "hint":"Hours and minutes large, the seconds smaller underneath."}]})json");
   m.elements.assign(std::begin(kElements), std::end(kElements));
